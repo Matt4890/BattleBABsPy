@@ -23,7 +23,7 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 ''''''#
 
 for line in sys.stdin:
-	if ',' in line:
+	if '|' in line:
 		for msg in line.split(','):
 			sock.sendto(msg.encode('ascii'), (UDP_IP, UDP_PORT))
 	else:

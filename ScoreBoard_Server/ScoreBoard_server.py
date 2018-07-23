@@ -7,6 +7,33 @@ Desc.
 ''''''#
 
 import socket
+import os
+
+''''''#
+''''''# Functions
+''''''#
+
+def getDataFilePath():
+	scriptDir	= os.path.dirname(__file__)
+	dataFile	= "data/teamscore.txt"
+	path		= os.path.join(scriptDir, dataFile)
+	return path
+
+def readTeamScores():
+	fileHandle	= open(getDataFilePath(), "r")
+	dataLines	= fileHandle.readlines()
+	fileHandle.close()
+	return dataLines
+
+def saveTeamScores():
+	fileHandle	= open(getDataFilePath(), "w")
+
+	dataLines = ""
+	for team in scoreDict:
+		dataLines += (team + ":" + str(scoreDict[team]) + "\r\n")
+
+	fileHandle.writelines(dataLines)
+	fileHandle.close()
 
 ''''''#
 ''''''# Networking
@@ -24,12 +51,7 @@ sock.bind((UDP_IP, UDP_PORT))
 
 scoreDict = {}
 
-dataFile	= "data/teamscore.txt"
-fileHandle	= open(dataFile, "r")
-dataLines	= fileHandle.readLines()
-fileHandle.close()
-
-for line in dataLines:
+for line in readTeamScores():
 	team, score = line.split(":")
 	if team not in scoreDict:
 		scoreDict[team] = int(score)
@@ -42,9 +64,11 @@ while True:
 
 	rawData, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
 	cookedData = rawData.decode("ascii").strip()
-
 	print("\nReceived message:", cookedData)
-	team, score = cookedData.split(":")
 
-	scoreDict[team] += int(score)
-	print("Team %s given %s point(s), now has %s points." % (team, score, scoreDict[team]))
+	for data in cookedData.split(","):
+		team, score = data.split(":")
+		scoreDict[team] += int(score)
+		print("Team '%s' given %s point(s), now has %s point(s)." % (team, score, scoreDict[team]))
+
+	saveTeamScores()
