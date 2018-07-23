@@ -15,18 +15,18 @@ import os
 
 def getDataFilePath():
 	scriptDir	= os.path.dirname(__file__)
-	dataFile	= "data/teamscore.txt"
-	path		= os.path.join(scriptDir, dataFile)
+	dataFolder	= "data"
+	path		= os.path.join(scriptDir, dataFolder)
 	return path
 
 def readTeamScores():
-	fileHandle	= open(getDataFilePath(), "r")
+	fileHandle	= open(getDataFilePath() + "/teamscore.txt", "r")
 	dataLines	= fileHandle.readlines()
 	fileHandle.close()
 	return dataLines
 
 def saveTeamScores():
-	fileHandle	= open(getDataFilePath(), "w")
+	fileHandle	= open(getDataFilePath() + "/teamscore.txt", "w")
 
 	dataLines = ""
 	for team in scoreDict:
@@ -34,6 +34,25 @@ def saveTeamScores():
 
 	fileHandle.writelines(dataLines)
 	fileHandle.close()
+
+def genMatches(teams):
+	# foo
+
+def getNextMatch():
+	fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
+	dataLines	= fileHandle.readlines()
+	fileHandle.close()
+
+	match = ""
+	for line in dataLines:
+		if line[0] not "~":
+			match = line
+			break
+	
+	return match
+
+def setMatchCompleted(match):
+	# foo
 
 ''''''#
 ''''''# Networking
@@ -53,8 +72,9 @@ scoreDict = {}
 
 for line in readTeamScores():
 	team, score = line.split(":")
+	team, score = team.upper(), int(score)
 	if team not in scoreDict:
-		scoreDict[team] = int(score)
+		scoreDict[team] = score
 
 ''''''#
 ''''''# Server Loop
@@ -66,9 +86,13 @@ while True:
 	cookedData = rawData.decode("ascii").strip()
 	print("\nReceived message:", cookedData)
 
-	for data in cookedData.split(","):
-		team, score = data.split(":")
-		scoreDict[team] += int(score)
-		print("Team '%s' given %s point(s), now has %s point(s)." % (team, score, scoreDict[team]))
+	msgs = cookedData.split(",")
+	match = []
+	for msg in msgs:
+		team, score = msg.split(":")
+		team, score = team.upper(), int(score)
+		match += team
+		scoreDict[team] += score
+		print("Team '%s' given %i point(s), now has %i point(s)." % (team, score, scoreDict[team]))
 
 	saveTeamScores()
