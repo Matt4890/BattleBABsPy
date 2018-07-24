@@ -16,7 +16,7 @@ import sys
 UDP_IP = "127.0.0.1"
 UDP_PORT = 5005
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+SOCK = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 ''''''#
 ''''''# Client Loop
@@ -24,7 +24,10 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 for line in sys.stdin:
 	if '|' in line:
-		for msg in line.split(','):
-			sock.sendto(msg.encode('ascii'), (UDP_IP, UDP_PORT))
+		for msg in line.split('|'):
+			SOCK.sendto(msg.encode('ascii'), (UDP_IP, UDP_PORT))
 	else:
-		sock.sendto(line.encode('ascii'), (UDP_IP, UDP_PORT))
+		SOCK.sendto(line.encode('ascii'), (UDP_IP, UDP_PORT))
+		if line.strip() == "NEXT_MATCH":
+			rawData, addr = SOCK.recvfrom(1024)
+			print(rawData.decode("ascii"))

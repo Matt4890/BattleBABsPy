@@ -70,7 +70,7 @@ def genNewMatches(teams):
 	matches = []
 	for i in range(0, len(teams) - 1):
 		for j in range(i + 1, len(teams)):
-			matches += (teams[i] + ":" + teams[j] + "\r\n")
+			matches.append(teams[i] + ":" + teams[j] + "\r\n")
 	random.shuffle(matches)
 
 	fileHandle	= open(getDataFilePath() + "/matches.txt", "w")
@@ -80,7 +80,7 @@ def genNewMatches(teams):
 """
 Finds and returns the next match in the 'matches.txt' file.
 
-Returns : A list of the teams in the next match.
+Returns : A string of the teams in the next match formatted as TEAM1:TEAM2.
 """
 def getNextMatch():
 	fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
@@ -90,7 +90,7 @@ def getNextMatch():
 	match = []
 	for line in dataLines:
 		if line[0] != "~":
-			match = line.split(":")
+			match = line
 			break
 	
 	return match
@@ -147,6 +147,11 @@ while True:
 	rawData, addr = SOCK.recvfrom(1024) # buffer size is 1024 bytes
 	cookedData = rawData.decode("ascii").strip()
 	print("\nReceived message:", cookedData)
+
+	if cookedData == "NEXT_MATCH":
+		print(addr)
+		SOCK.sendto(getNextMatch().encode("ascii"), addr)
+		continue
 
 	msgs = cookedData.split(",")
 	match = []
