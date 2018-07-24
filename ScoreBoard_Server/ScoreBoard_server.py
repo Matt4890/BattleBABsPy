@@ -1,11 +1,12 @@
-'''
+"""
 Desc.
-'''
+"""
 
 ''''''#
 ''''''# Imports
 ''''''#
 
+import random
 import socket
 import os
 
@@ -35,8 +36,15 @@ def saveTeamScores():
 	fileHandle.writelines(dataLines)
 	fileHandle.close()
 
-def genMatches(teams):
-	# foo
+def genNewMatches(teams):
+	matches = []
+	for i in range(0, len(teams) - 1):
+		for j in range(i + 1, len(teams)):
+			matches += (teams[i] + ":" + teams[j] + "\r\n")
+
+	fileHandle	= open(getDataFilePath() + "/matches.txt", "w")
+	fileHandle.writelines(matches)
+	fileHandle.close()
 
 def getNextMatch():
 	fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
@@ -45,14 +53,26 @@ def getNextMatch():
 
 	match = ""
 	for line in dataLines:
-		if line[0] not "~":
+		if line[0] != "~":
 			match = line
 			break
 	
 	return match
 
 def setMatchCompleted(match):
-	# foo
+	fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
+	dataLines	= fileHandle.readlines()
+	fileHandle.close()
+
+	matchStr = match[0] + ":" + match[1]
+	for line in dataLines:
+		if line == matchStr:
+			line = "~" + matchStr
+			break
+
+	fileHandle	= open(getDataFilePath() + "/matches.txt", "w")
+	fileHandle.writelines(dataLines)
+	fileHandle.close()
 
 ''''''#
 ''''''# Networking
