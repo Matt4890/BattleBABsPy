@@ -139,28 +139,49 @@ SCORE_DICT = readTeamScores()
 
 """
 Waits until a UDP message is received.
-A message must be formatted as TEAM:SCORE_DELTA which you can chain together with ','
+
+Tries to match the message to a command.
+If no message is found, it will see if the message could be formatted in a scoring message.
+A score message must be formatted as TEAM:SCORE_DELTA which you can chain together with ','
 After modifying points, the match will be marked as 'completed' in the 'matches.txt' file (if it exists in the file)
 """
 while True:
 
 	rawData, addr = SOCK.recvfrom(1024) # buffer size is 1024 bytes
 	cookedData = rawData.decode("ascii").strip()
-	print("\nReceived message:", cookedData)
+	print("\nReceived message: '%s' from" % cookedData, addr)
 
 	if cookedData == "NEXT_MATCH":
-		print(addr)
+		print("Sending next match data to:", addr)
 		SOCK.sendto(getNextMatch().encode("ascii"), addr)
 		continue
 
-	msgs = cookedData.split(",")
-	match = []
-	for msg in msgs:
-		team, score = msg.split(":")
-		team, score = team.upper(), int(score)
-		match += team
-		SCORE_DICT[team] += score
-		print("Team '%s' given %i point(s), now has %i point(s)." % (team, score, SCORE_DICT[team]))
+	if cookedData == "RESET_SCORES":
+		print("Resetting team scores to 0...")
+		for key in SCORE_DICT:
+			SCORE_DICT[key] = 0
+		saveTeamScores()
+		print("Done.")
+		continue
 
-	setMatchCompleted(match)
-	saveTeamScores()
+	if cookedData == "RESET_MATCHES":
+		print("Generating a new match list...")
+		genNewMatches(list(SCORE_DICT.keys()))
+		print("Done.")
+		continue
+
+	if cookedData.count(":") == cookedData.count(",") + 1:
+		msgs = cookedData.split(",")
+		match = []
+		for msg in msgs:
+			team, score = msg.split(":")
+			team, score = team.upper(), int(score)
+			match += team
+			SCORE_DICT[team] += score
+			print("Team '%s' given %i point(s), now has %i point(s)." % (team, score, SCORE_DICT[team]))
+
+		setMatchCompleted(match)
+		saveTeamScores()
+		continue
+
+	print("Message not recognized. Ignoring.")
