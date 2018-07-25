@@ -54,7 +54,7 @@ def saveTeamScores():
 
 	dataLines = ""
 	for team in SCORE_DICT:
-		dataLines += (team + ":" + str(SCORE_DICT[team]) + "\r\n")
+		dataLines.append(team + ":" + str(SCORE_DICT[team]) + "\r\n")
 
 	fileHandle.writelines(dataLines)
 	fileHandle.close()
@@ -147,15 +147,18 @@ After modifying points, the match will be marked as 'completed' in the 'matches.
 """
 while True:
 
+	# Wait for and gather data to be used.
 	rawData, addr = SOCK.recvfrom(1024) # buffer size is 1024 bytes
-	cookedData = rawData.decode("ascii").strip()
+	cookedData = rawData.decode("ascii").strip().upper()
 	print("\nReceived message: '%s' from" % cookedData, addr)
 
+	# If a client requested the next match...
 	if cookedData == "NEXT_MATCH":
 		print("Sending next match data to:", addr)
 		SOCK.sendto(getNextMatch().encode("ascii"), addr)
 		continue
 
+	# If a client requested for the scores to be reset...
 	if cookedData == "RESET_SCORES":
 		print("Resetting team scores to 0...")
 		for key in SCORE_DICT:
@@ -164,24 +167,37 @@ while True:
 		print("Done.")
 		continue
 
+	# If a client requested the matches to be reset...
 	if cookedData == "RESET_MATCHES":
 		print("Generating a new match list...")
 		genNewMatches(list(SCORE_DICT.keys()))
 		print("Done.")
 		continue
 
+	# If the message has the potential to be formatted as a scoring message...
 	if cookedData.count(":") == cookedData.count(",") + 1:
-		msgs = cookedData.split(",")
-		match = []
+		msgs	= cookedData.split(",")
+		match	= []
+		scores	= []
+
+		# Fracture data for easy world domination... I mean for easy "manipulation"... Mostly to check the teams are real first.
 		for msg in msgs:
 			team, score = msg.split(":")
 			team, score = team.upper(), int(score)
-			match += team
-			SCORE_DICT[team] += score
-			print("Team '%s' given %i point(s), now has %i point(s)." % (team, score, SCORE_DICT[team]))
+			match.append(team)
+			scores.append(score)
 
-		setMatchCompleted(match)
-		saveTeamScores()
+		# Check that all of the teams referenced actually exist before modifying scores.
+		if all(team in SCORE_DICT for team in match):
+			for i in range(0, len(match)):
+				SCORE_DICT[match[i]] += scores[i]
+				print("Team '%s' given %i point(s), now has %i point(s)." % (match[i], scores[i], SCORE_DICT[match[i]]))
+			setMatchCompleted(match)
+			saveTeamScores()
+		else:
+			print("Team(s) not recognized. Ignoring.")
+
 		continue
 
-	print("Message not recognized. Ignoring.")
+	# Otherwise... We can't comply to instructions we can't understand ¯\_(ツ)_/¯
+	print("Message not recognized. Ignoring. ¯\\_(ツ)_/¯")
