@@ -52,7 +52,7 @@ Each line is formatted as: TEAM:SCORE
 def saveTeamScores():
 	fileHandle	= open(getDataFilePath() + "/teamscore.txt", "w")
 
-	dataLines = ""
+	dataLines = []
 	for team in SCORE_DICT:
 		dataLines.append(team + ":" + str(SCORE_DICT[team]) + "\r\n")
 
@@ -102,6 +102,10 @@ A completed match is noted by a '~' as the first character of the line.
 match : A list of teams in the completed match.
 """
 def setMatchCompleted(match):
+	# Gotch now, ya damn bug.
+	if len(match) != 2 or not all(team in SCORE_DICT for team in match):
+		return
+
 	fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
 	dataLines	= fileHandle.readlines()
 	fileHandle.close()
@@ -156,6 +160,7 @@ while True:
 	if cookedData == "NEXT_MATCH":
 		print("Sending next match data to:", addr)
 		SOCK.sendto(getNextMatch().encode("ascii"), addr)
+		print("Done.")
 		continue
 
 	# If a client requested for the scores to be reset...
