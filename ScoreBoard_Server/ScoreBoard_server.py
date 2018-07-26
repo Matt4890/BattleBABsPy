@@ -27,7 +27,7 @@ def getDataFilePath():
 
 """
 Reads the data stored in the 'teamscore.txt' file in the data directory.
-Each line is formatted as: TEAM:SCORE
+Each line is formatted as: TEAM:SCORE.
 
 Returns : A dictionary of teams and their appropriate scores.
 """
@@ -47,7 +47,7 @@ def readTeamScores():
 
 """
 Saves the data stored in the score dictionary into the 'teamscore.txt' file in the data directory.
-Each line is formatted as: TEAM:SCORE
+Each line is formatted as: TEAM:SCORE.
 """
 def saveTeamScores():
 	fileHandle	= open(getDataFilePath() + "/teamscore.txt", "w")
@@ -58,11 +58,13 @@ def saveTeamScores():
 
 	fileHandle.writelines(dataLines)
 	fileHandle.close()
+	
+	updateLeaderboard()
 
 """
 Takes a list of teams, and creates a round-robin style match list where each team faces every other team once.
 The match list is then shuffled into a random order and written to data/matches.txt.
-Each line is formatted as: TEAM1:TEAM2
+Each line is formatted as: TEAM1:TEAM2.
 
 teams : A list of team names as strings.
 """
@@ -102,7 +104,7 @@ A completed match is noted by a '~' as the first character of the line.
 match : A list of teams in the completed match.
 """
 def setMatchCompleted(match):
-	# Gotch now, ya damn bug.
+	# Gotcha now, ya damn bug.
 	if len(match) != 2 or not all(team in SCORE_DICT for team in match):
 		return
 
@@ -121,6 +123,16 @@ def setMatchCompleted(match):
 	fileHandle.writelines(dataLines)
 	fileHandle.close()
 
+"""
+Updates the global LEADERBOARD list.
+It is sorted by each team's score, largest to smallest.
+"""
+def updateLeaderboard():
+	LEADERBOARD = sorted(SCORE_DICT, key=SCORE_DICT.__getitem__, reverse=True)
+	print("Leaderboard updated. Current ranking:")
+	for team in LEADERBOARD:
+		print(team, "\t\t", SCORE_DICT[team])
+
 ''''''#
 ''''''# Networking
 ''''''#
@@ -136,6 +148,8 @@ SOCK.bind((UDP_IP, UDP_PORT))
 ''''''#
 
 SCORE_DICT = readTeamScores()
+LEADERBOARD = list(SCORE_DICT.keys())
+updateLeaderboard()
 
 ''''''#
 ''''''# Server Loop
@@ -146,20 +160,22 @@ Waits until a UDP message is received.
 
 Tries to match the message to a command.
 If no message is found, it will see if the message could be formatted in a scoring message.
-A score message must be formatted as TEAM:SCORE_DELTA which you can chain together with ','
+A score message must be formatted as TEAM:SCORE_DELTA, which you can chain together with ','.
 After modifying points, the match will be marked as 'completed' in the 'matches.txt' file (if it exists in the file)
 """
 while True:
 
 	# Wait for and gather data to be used.
-	rawData, addr = SOCK.recvfrom(1024) # buffer size is 1024 bytes
+	rawData, client = SOCK.recvfrom(1024) # buffer size is 1024 bytes
 	cookedData = rawData.decode("ascii").strip().upper()
-	print("\nReceived message: '%s' from" % cookedData, addr)
+	print("\nReceived message: '%s' from" % cookedData, client)
 
 	# If a client requested the next match...
 	if cookedData == "NEXT_MATCH":
-		print("Sending next match data to:", addr)
-		SOCK.sendto(getNextMatch().encode("ascii"), addr)
+		print("Sending next match data to:", client)
+		match	= getNextMatch()
+		msg		= match[0] + ":" + match[1] if len(match) == 2 else "NONE"
+		SOCK.sendto(msg.encode("ascii"), client)
 		print("Done.")
 		continue
 
@@ -205,4 +221,4 @@ while True:
 		continue
 
 	# Otherwise... We can't comply to instructions we can't understand ¯\_(ツ)_/¯
-	print("Message not recognized. Ignoring. ¯\\_(ツ)_/¯")
+	print("Message not recognized. Ignoring.")
