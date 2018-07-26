@@ -91,11 +91,12 @@ def getNextMatch():
 	dataLines	= fileHandle.readlines()
 	fileHandle.close()
 
-	match = []
+	match = ""
 	for line in dataLines:
 		if line[0] != "~":
-			match = line
+			match = line.strip()
 			break
+	match = "NONE" if match == "" else match
 	
 	return match
 
@@ -194,8 +195,7 @@ while True:
 	if cookedData == "NEXT_MATCH":
 		print("Sending next match data to:", client)
 		match	= getNextMatch()
-		msg		= match[0] + ":" + match[1] if len(match) == 2 else "NONE"
-		SOCK.sendto(msg.encode("ascii"), client)
+		SOCK.sendto(match.encode("ascii"), client)
 		print("Done.")
 		continue
 
