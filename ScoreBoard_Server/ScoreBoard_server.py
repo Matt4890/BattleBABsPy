@@ -81,6 +81,7 @@ def genNewMatches(teams):
 
 """
 Finds and returns the next match in the 'matches.txt' file.
+A completed match is noted by a '~' as the first character of the line.
 
 Returns : A string of the teams in the next match formatted as TEAM1:TEAM2.
 """
@@ -161,7 +162,7 @@ Waits until a UDP message is received.
 Tries to match the message to a command.
 If no message is found, it will see if the message could be formatted in a scoring message.
 A score message must be formatted as TEAM:SCORE_DELTA, which you can chain together with ','.
-After modifying points, the match will be marked as 'completed' in the 'matches.txt' file (if it exists in the file)
+After modifying points, the match will be marked as 'completed' in the 'matches.txt' file (if it exists in the file).
 """
 while True:
 
