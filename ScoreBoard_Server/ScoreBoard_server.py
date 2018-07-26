@@ -9,6 +9,7 @@ Desc.
 import random
 import socket
 import os
+import pygame
 
 ''''''#
 ''''''# Functions
@@ -153,8 +154,22 @@ LEADERBOARD = list(SCORE_DICT.keys())
 updateLeaderboard()
 
 ''''''#
-''''''# Server Loop
+''''''# PyGame GUI Data
 ''''''#
+
+pygame.init()
+
+WINDOW_WIDTH	= 800
+WINDOW_HEIGHT	= 600
+DISPLAY_SURFACE	= pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+pygame.display.set_caption("Battle BABs - Server")
+
+MAIN_FONT	= pygame.font.SysFont("monospace", 32, True)
+SMALL_FONT	= pygame.font.SysFont("monospace", 16, True)
+
+''''''''''''#
+''''''''''''# Server Loop
+''''''''''''#
 
 """
 Waits until a UDP message is received.
@@ -165,6 +180,10 @@ A score message must be formatted as TEAM:SCORE_DELTA, which you can chain toget
 After modifying points, the match will be marked as 'completed' in the 'matches.txt' file (if it exists in the file).
 """
 while True:
+
+	''''''#
+	''''''# Game Logic
+	''''''#
 
 	# Wait for and gather data to be used.
 	rawData, client = SOCK.recvfrom(1024) # buffer size is 1024 bytes
