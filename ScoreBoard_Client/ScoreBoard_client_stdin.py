@@ -28,6 +28,6 @@ for line in sys.stdin:
 			SOCK.sendto(msg.encode('ascii'), (UDP_IP, UDP_PORT))
 	else:
 		SOCK.sendto(line.encode('ascii'), (UDP_IP, UDP_PORT))
-		if line.strip() == "NEXT_MATCH":
+		if line.strip().upper() == "NEXT_MATCH":
 			rawData, addr = SOCK.recvfrom(1024)
 			print(rawData.decode("ascii"))

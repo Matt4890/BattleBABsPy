@@ -83,7 +83,7 @@ def genNewMatches(teams):
 Finds and returns the next match in the 'matches.txt' file.
 A completed match is noted by a '~' as the first character of the line.
 
-Returns : A string of the teams in the next match formatted as TEAM1:TEAM2.
+Returns : A list of team names in the next match.
 """
 def getNextMatch():
 	fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
@@ -93,7 +93,7 @@ def getNextMatch():
 	match = []
 	for line in dataLines:
 		if line[0] != "~":
-			match = line
+			match = line.strip().split(":")
 			break
 	
 	return match
