@@ -13,7 +13,7 @@ import socket
 from threading import Thread
 
 ''''''#
-''''''# Classes
+''''''# Thread Classes
 ''''''#
 
 class ServerThread(Thread):
@@ -116,6 +116,19 @@ class GUIThread(Thread):
 
 			# Display Updates
 			pygame.display.update()
+
+
+''''''#
+''''''# Generic Classes
+''''''#
+
+class Team(Object):
+
+	def __init__(self, name):
+		self.name			= name
+		self.score			= 0
+		self.matchesPlayed	= 0
+		self.matchesWon		= 0
 
 ''''''#
 ''''''# Functions
