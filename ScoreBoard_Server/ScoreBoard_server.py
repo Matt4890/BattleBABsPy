@@ -6,9 +6,129 @@ Desc.
 ''''''# Imports
 ''''''#
 
+import os
+import pygame
 import random
 import socket
-import os
+from threading import Thread
+
+''''''#
+''''''# Thread Classes
+''''''#
+
+class ServerThread(Thread):
+
+	def __init__(self):
+		Thread.__init__(self)
+
+	def run(self):
+		"""
+		Waits until a UDP message is received.
+
+		Tries to match the message to a command.
+		If no message is found, it will see if the message could be formatted in a scoring message.
+		A score message must be formatted as TEAM:SCORE_DELTA, which you can chain together with ','.
+		After modifying points, the match will be marked as 'completed' in the 'matches.txt' file (if it exists in the file).
+		"""
+		while True:
+
+			# Wait for and gather data to be used.
+			rawData, client = SOCK.recvfrom(1024) # buffer size is 1024 bytes
+			cookedData = rawData.decode("ascii").strip().upper()
+			print("\nReceived message: '%s' from" % cookedData, client)
+
+			# If a client requested the next match...
+			if cookedData == "NEXT_MATCH":
+				print("Sending next match data to:", client)
+				match	= getNextMatch()
+				SOCK.sendto(match.encode("ascii"), client)
+				print("Done.")
+				continue
+
+			# If a client requested for the scores to be reset...
+			if cookedData == "RESET_SCORES":
+				print("Resetting team scores to 0...")
+				for key in SCORE_DICT:
+					SCORE_DICT[key] = 0
+				saveTeamScores()
+				print("Done.")
+				continue
+
+			# If a client requested the matches to be reset...
+			if cookedData == "RESET_MATCHES":
+				print("Generating a new match list...")
+				genNewMatches(list(SCORE_DICT.keys()))
+				print("Done.")
+				continue
+
+			# If the message has the potential to be formatted as a scoring message...
+			if cookedData.count(":") == cookedData.count(",") + 1:
+				msgs	= cookedData.split(",")
+				match	= []
+				scores	= []
+
+				# Fracture data for easy world domination... I mean for easy "manipulation"... Mostly to check the teams are real first.
+				for msg in msgs:
+					team, score = msg.split(":")
+					team, score = team.upper(), int(score)
+					match.append(team)
+					scores.append(score)
+
+				# Check that all of the teams referenced actually exist before modifying scores.
+				if all(team in SCORE_DICT for team in match):
+					for i in range(0, len(match)):
+						SCORE_DICT[match[i]] += scores[i]
+						print("Team '%s' given %i point(s), now has %i point(s)." % (match[i], scores[i], SCORE_DICT[match[i]]))
+					setMatchCompleted(match)
+					saveTeamScores()
+				else:
+					print("Team(s) not recognized. Ignoring.")
+
+				continue
+
+			# Otherwise... We can't comply to instructions we can't understand ¯\_(ツ)_/¯
+			print("Message not recognized. Ignoring.")
+
+class GUIThread(Thread):
+
+	def __init__(self):
+		Thread.__init__(self)
+
+	def run(self):
+		"""
+		Does a thing.
+		"""
+		while True:
+
+			# Update some variables
+			width, height = DISPLAY_SURFACE.get_size()
+
+			# Background
+			DISPLAY_SURFACE.fill((56, 72, 88))
+
+			# Title Bar
+
+			# Leaderboard
+
+			# Match List
+
+			# Buttons
+
+			# Display Updates
+			pygame.display.update()
+
+
+''''''#
+''''''# Generic Classes
+''''''#
+
+class Team(Object):
+
+	def __init__(self, name):
+		self.name			= name
+		self.score			= 0
+		self.matchesPlayed	= 0
+		self.matchesWon		= 0
 
 ''''''#
 ''''''# Functions
@@ -20,7 +140,7 @@ Finds the absolute file path to the script's local data directory.
 Returns : The path to the data folder.
 """
 def getDataFilePath():
-	scriptDir	= os.path.dirname(__file__)
+	scriptDir	= os.path.dirname("__file__")
 	dataFolder	= "data"
 	path		= os.path.join(scriptDir, dataFolder)
 	return path
@@ -90,11 +210,12 @@ def getNextMatch():
 	dataLines	= fileHandle.readlines()
 	fileHandle.close()
 
-	match = []
+	match = ""
 	for line in dataLines:
 		if line[0] != "~":
-			match = line.strip().split(":")
+			match = line.strip()
 			break
+	match = "NONE" if match == "" else match
 	
 	return match
 
@@ -153,73 +274,27 @@ LEADERBOARD = list(SCORE_DICT.keys())
 updateLeaderboard()
 
 ''''''#
-''''''# Server Loop
+''''''# PyGame GUI Data
 ''''''#
 
-"""
-Waits until a UDP message is received.
+pygame.init()
 
-Tries to match the message to a command.
-If no message is found, it will see if the message could be formatted in a scoring message.
-A score message must be formatted as TEAM:SCORE_DELTA, which you can chain together with ','.
-After modifying points, the match will be marked as 'completed' in the 'matches.txt' file (if it exists in the file).
-"""
-while True:
+WINDOW_WIDTH	= 1920
+WINDOW_HEIGHT	= 1080
+DISPLAY_SURFACE	= pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))#, pygame.FULLSCREEN) <-- Use for fullscreen
+pygame.display.set_caption("Battle BABs - Server")
 
-	# Wait for and gather data to be used.
-	rawData, client = SOCK.recvfrom(1024) # buffer size is 1024 bytes
-	cookedData = rawData.decode("ascii").strip().upper()
-	print("\nReceived message: '%s' from" % cookedData, client)
+MAIN_FONT	= pygame.font.SysFont("monospace", 32, True)
+SMALL_FONT	= pygame.font.SysFont("monospace", 16, True)
 
-	# If a client requested the next match...
-	if cookedData == "NEXT_MATCH":
-		print("Sending next match data to:", client)
-		match	= getNextMatch()
-		msg		= match[0] + ":" + match[1] if len(match) == 2 else "NONE"
-		SOCK.sendto(msg.encode("ascii"), client)
-		print("Done.")
-		continue
+''''''#
+''''''# Run!
+''''''#
 
-	# If a client requested for the scores to be reset...
-	if cookedData == "RESET_SCORES":
-		print("Resetting team scores to 0...")
-		for key in SCORE_DICT:
-			SCORE_DICT[key] = 0
-		saveTeamScores()
-		print("Done.")
-		continue
+# Start the game logic controller
+GameController = ServerThread()
+GameController.start()
 
-	# If a client requested the matches to be reset...
-	if cookedData == "RESET_MATCHES":
-		print("Generating a new match list...")
-		genNewMatches(list(SCORE_DICT.keys()))
-		print("Done.")
-		continue
-
-	# If the message has the potential to be formatted as a scoring message...
-	if cookedData.count(":") == cookedData.count(",") + 1:
-		msgs	= cookedData.split(",")
-		match	= []
-		scores	= []
-
-		# Fracture data for easy world domination... I mean for easy "manipulation"... Mostly to check the teams are real first.
-		for msg in msgs:
-			team, score = msg.split(":")
-			team, score = team.upper(), int(score)
-			match.append(team)
-			scores.append(score)
-
-		# Check that all of the teams referenced actually exist before modifying scores.
-		if all(team in SCORE_DICT for team in match):
-			for i in range(0, len(match)):
-				SCORE_DICT[match[i]] += scores[i]
-				print("Team '%s' given %i point(s), now has %i point(s)." % (match[i], scores[i], SCORE_DICT[match[i]]))
-			setMatchCompleted(match)
-			saveTeamScores()
-		else:
-			print("Team(s) not recognized. Ignoring.")
-
-		continue
-
-	# Otherwise... We can't comply to instructions we can't understand ¯\_(ツ)_/¯
-	print("Message not recognized. Ignoring.")
+# Start the GUI controller
+GUIController = GUIThread()
+GUIController.start()
