@@ -16,7 +16,7 @@ from threading import Thread
 ''''''# Classes
 ''''''#
 
-class LogicThread(Thread):
+class ServerThread(Thread):
 
 	def __init__(self):
 		Thread.__init__(self)
@@ -99,7 +99,15 @@ class GUIThread(Thread):
 		Does a thing.
 		"""
 		while True:
-			DISPLAY_SURFACE.fill((80, 80, 120))
+
+			# Update some variables
+			width, height = DISPLAY_SURFACE.get_size()
+
+			# Background
+			DISPLAY_SURFACE.fill((56, 72, 88))
+
+			# Display Updates
+			pygame.display.update()
 
 ''''''#
 ''''''# Functions
@@ -111,7 +119,7 @@ Finds the absolute file path to the script's local data directory.
 Returns : The path to the data folder.
 """
 def getDataFilePath():
-	scriptDir	= os.path.dirname(__file__)
+	scriptDir	= os.path.dirname("__file__")
 	dataFolder	= "data"
 	path		= os.path.join(scriptDir, dataFolder)
 	return path
@@ -250,9 +258,9 @@ updateLeaderboard()
 
 pygame.init()
 
-WINDOW_WIDTH	= 800
-WINDOW_HEIGHT	= 600
-DISPLAY_SURFACE	= pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+WINDOW_WIDTH	= 1920
+WINDOW_HEIGHT	= 1080
+DISPLAY_SURFACE	= pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))#, pygame.FULLSCREEN) <-- Use for fullscreen
 pygame.display.set_caption("Battle BABs - Server")
 
 MAIN_FONT	= pygame.font.SysFont("monospace", 32, True)
@@ -263,7 +271,7 @@ SMALL_FONT	= pygame.font.SysFont("monospace", 16, True)
 ''''''#
 
 # Start the game logic controller
-GameController = LogicThread()
+GameController = ServerThread()
 GameController.start()
 
 # Start the GUI controller
