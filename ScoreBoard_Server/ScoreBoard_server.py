@@ -106,6 +106,14 @@ class GUIThread(Thread):
 			# Background
 			DISPLAY_SURFACE.fill((56, 72, 88))
 
+			# Title Bar
+
+			# Leaderboard
+
+			# Match List
+
+			# Buttons
+
 			# Display Updates
 			pygame.display.update()
 
