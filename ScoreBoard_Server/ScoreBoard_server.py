@@ -122,17 +122,41 @@ class GUIThread(Thread):
 ''''''# Generic Classes
 ''''''#
 
-class Team(Object):
+class Team():
 
-	def __init__(self, name):
-		self.name			= name
-		self.score			= 0
-		self.matchesPlayed	= 0
-		self.matchesWon		= 0
+	def __init__(self, name = "I need a name, dumbass", score = 0, matchesPlayed = 0, matchesWon = 0):
+		self.name			= name.upper()
+		self.score			= score
+		self.matchesPlayed	= matchesPlayed
+		self.matchesWon		= matchesWon
+
+	def genDataStr(self):
+		return "%s:%i:%i:%i" % (
+			self.name,
+			self.score,
+			self.matchesPlayed,
+			self.matchesWon
+		)
 
 ''''''#
 ''''''# Functions
 ''''''#
+
+"""
+'NAME:SCORE:MATCHES_PLAYED:MATCHES_WON'
+"""
+def createTeamFromStr(string):
+	rawBits = string.split(":")
+	cookedBits = []
+	try:
+		cookedBits = [str(bit).upper() if bit is rawBits[0] else int(bit) for bit in rawBits]
+	except Exception as e:
+		raise ValueError("Cannot format string into team. Must be formatted 'NAME:SCORE:MATCHES_PLAYED:MATCHES_WON'.")
+		print("OwO what's this?")
+		raise e
+		print("A weird script, that's what.")
+		print("If you see this, some shit is reallllly fucked up.")
+	return Team(*bits)
 
 """
 Finds the absolute file path to the script's local data directory.
@@ -146,22 +170,19 @@ def getDataFilePath():
 	return path
 
 """
-Reads the data stored in the 'teamscore.txt' file in the data directory.
-Each line is formatted as: TEAM:SCORE.
-
-Returns : A dictionary of teams and their appropriate scores.
+Reads in the team object stored in './data/teams.txt'
 """
-def readTeamScores():
-	fileHandle	= open(getDataFilePath() + "/teamscore.txt", "r")
+def readTeamData():
+	fileHandle	= open(getDataFilePath() + "/teams.txt", "r")
 	dataLines	= fileHandle.readlines()
 	fileHandle.close()
 
 	scoreDict = {}
 	for line in dataLines:
-		team, score = line.split(":")
-		team, score = team.upper(), int(score)
-		if team not in scoreDict:
-			scoreDict[team] = score
+		teamName, score = line.split(":")
+		teamName, score = teamName.upper(), int(score)
+		if teamName not in scoreDict:
+			scoreDict[teamName] = score
 
 	return scoreDict
 
@@ -185,7 +206,7 @@ def saveTeamScores():
 Takes a list of teams, and creates a round-robin style match list where each team faces every other team once.
 The match list is then shuffled into a random order and written to data/matches.txt.
 Each line is formatted as: TEAM1:TEAM2.
-
+rRR
 teams : A list of team names as strings.
 """
 def genNewMatches(teams):
