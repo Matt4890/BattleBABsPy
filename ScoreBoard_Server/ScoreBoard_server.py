@@ -46,23 +46,33 @@ class ServerThread(Thread):
 				continue
 
 			# If a client requested for the scores to be reset...
-			if cookedData == "RESET_SCORES":
+			elif cookedData == "RESET_SCORES":
 				print("Resetting team scores to 0...")
-				for key in SCORE_DICT:
-					SCORE_DICT[key] = 0
-				saveTeamScores()
+				for team in TEAM_DICT:
+					TEAM_DICT[team].score = 0
+				saveTeamData()
 				print("Done.")
 				continue
 
 			# If a client requested the matches to be reset...
-			if cookedData == "RESET_MATCHES":
+			elif cookedData == "RESET_MATCHES":
 				print("Generating a new match list...")
-				genNewMatches(list(SCORE_DICT.keys()))
+				genNewMatches(list(TEAM_DICT.keys()))
+				print("Resetting team matches...")
+				for team in TEAM_DICT:
+					TEAM_DICT[team].matchesPlayed = 0
+					TEAM_DICT[team].matchesWon = 0
 				print("Done.")
+				updateLeaderboard()
 				continue
 
+			# If a client requested a full stat reset...
+			elif cookedData == "RESET":
+				SOCK.sendto("RESET_MATCHES".encode('ascii'), (UDP_IP, UDP_PORT))
+				SOCK.sendto("RESET_SCORES".encode('ascii'), (UDP_IP, UDP_PORT))
+
 			# If the message has the potential to be formatted as a scoring message...
-			if cookedData.count(":") == cookedData.count(",") + 1:
+			elif cookedData.count(":") == cookedData.count(",") + 1:
 				msgs	= cookedData.split(",")
 				match	= []
 				scores	= []
@@ -75,12 +85,16 @@ class ServerThread(Thread):
 					scores.append(score)
 
 				# Check that all of the teams referenced actually exist before modifying scores.
-				if all(team in SCORE_DICT for team in match):
+				if all(team in TEAM_DICT for team in match):
+					winningScore = max(scores)
 					for i in range(0, len(match)):
-						SCORE_DICT[match[i]] += scores[i]
-						print("Team '%s' given %i point(s), now has %i point(s)." % (match[i], scores[i], SCORE_DICT[match[i]]))
+						team = TEAM_DICT[match[i]]
+						team.score += scores[i]
+						team.matchesPlayed += 1
+						if scores[i] == winningScore: team.matchesWon += 1
+						print("Team '%s' given %i point(s), now has %i point(s)." % (match[i], scores[i], team.score))
 					setMatchCompleted(match)
-					saveTeamScores()
+					saveTeamData()
 				else:
 					print("Team(s) not recognized. Ignoring.")
 
@@ -124,13 +138,13 @@ class GUIThread(Thread):
 
 class Team():
 
-	def __init__(self, name = "I need a name, dumbass", score = 0, matchesPlayed = 0, matchesWon = 0):
+	def __init__(self, name, score = 0, matchesPlayed = 0, matchesWon = 0):
 		self.name			= name.upper()
 		self.score			= score
 		self.matchesPlayed	= matchesPlayed
 		self.matchesWon		= matchesWon
 
-	def genDataStr(self):
+	def __repr__(self):
 		return "%s:%i:%i:%i" % (
 			self.name,
 			self.score,
@@ -145,18 +159,17 @@ class Team():
 """
 'NAME:SCORE:MATCHES_PLAYED:MATCHES_WON'
 """
-def createTeamFromStr(string):
+def constructTeamFromStr(string):
 	rawBits = string.split(":")
 	cookedBits = []
 	try:
-		cookedBits = [str(bit).upper() if bit is rawBits[0] else int(bit) for bit in rawBits]
+		cookedBits = [rawBits[0].upper(), *[int(bit) for bit in rawBits[1:]]]
 	except Exception as e:
 		raise ValueError("Cannot format string into team. Must be formatted 'NAME:SCORE:MATCHES_PLAYED:MATCHES_WON'.")
 		print("OwO what's this?")
 		raise e
 		print("A weird script, that's what.")
-		print("If you see this, some shit is reallllly fucked up.")
-	return Team(*bits)
+	return Team(*cookedBits)
 
 """
 Finds the absolute file path to the script's local data directory.
@@ -177,26 +190,24 @@ def readTeamData():
 	dataLines	= fileHandle.readlines()
 	fileHandle.close()
 
-	scoreDict = {}
+	teamDict = {}
 	for line in dataLines:
-		teamName, score = line.split(":")
-		teamName, score = teamName.upper(), int(score)
-		if teamName not in scoreDict:
-			scoreDict[teamName] = score
+		cookedData = line.strip().upper()
+		team = constructTeamFromStr(cookedData)
+		teamDict[team.name] = team
 
-	return scoreDict
+	return teamDict
 
 """
-Saves the data stored in the score dictionary into the 'teamscore.txt' file in the data directory.
+Saves the data stored in the score dictionary into './data/teams.txt'.
 Each line is formatted as: TEAM:SCORE.
 """
-def saveTeamScores():
-	fileHandle	= open(getDataFilePath() + "/teamscore.txt", "w")
-
+def saveTeamData():
 	dataLines = []
-	for team in SCORE_DICT:
-		dataLines.append(team + ":" + str(SCORE_DICT[team]) + "\r\n")
+	for team in TEAM_DICT:
+		dataLines.append(repr(TEAM_DICT[team]) + "\r\n")
 
+	fileHandle	= open(getDataFilePath() + "/teams.txt", "w")
 	fileHandle.writelines(dataLines)
 	fileHandle.close()
 	
@@ -206,7 +217,7 @@ def saveTeamScores():
 Takes a list of teams, and creates a round-robin style match list where each team faces every other team once.
 The match list is then shuffled into a random order and written to data/matches.txt.
 Each line is formatted as: TEAM1:TEAM2.
-rRR
+
 teams : A list of team names as strings.
 """
 def genNewMatches(teams):
@@ -248,7 +259,7 @@ match : A list of teams in the completed match.
 """
 def setMatchCompleted(match):
 	# Gotcha now, ya damn bug.
-	if len(match) != 2 or not all(team in SCORE_DICT for team in match):
+	if len(match) != 2 or not all(team in TEAM_DICT for team in match):
 		return
 
 	fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
@@ -271,10 +282,10 @@ Updates the global LEADERBOARD list.
 It is sorted by each team's score, largest to smallest.
 """
 def updateLeaderboard():
-	LEADERBOARD = sorted(SCORE_DICT, key=SCORE_DICT.__getitem__, reverse=True)
+	LEADERBOARD = sorted(TEAM_DICT, key=lambda team: TEAM_DICT[team].score, reverse=True)
 	print("Leaderboard updated. Current ranking:")
 	for team in LEADERBOARD:
-		print(team, "\t\t", SCORE_DICT[team])
+		print(team, "\t\t", TEAM_DICT[team])
 
 ''''''#
 ''''''# Networking
@@ -290,14 +301,14 @@ SOCK.bind((UDP_IP, UDP_PORT))
 ''''''# Battle BAB Data
 ''''''#
 
-SCORE_DICT = readTeamScores()
-LEADERBOARD = list(SCORE_DICT.keys())
+TEAM_DICT = readTeamData()
+LEADERBOARD = list(TEAM_DICT.keys())
 updateLeaderboard()
 
 ''''''#
 ''''''# PyGame GUI Data
 ''''''#
-
+"""
 pygame.init()
 
 WINDOW_WIDTH	= 1920
@@ -307,7 +318,7 @@ pygame.display.set_caption("Battle BABs - Server")
 
 MAIN_FONT	= pygame.font.SysFont("monospace", 32, True)
 SMALL_FONT	= pygame.font.SysFont("monospace", 16, True)
-
+"""
 ''''''#
 ''''''# Run!
 ''''''#
@@ -317,5 +328,5 @@ GameController = ServerThread()
 GameController.start()
 
 # Start the GUI controller
-GUIController = GUIThread()
-GUIController.start()
+# GUIController = GUIThread()
+# GUIController.start()
