@@ -125,6 +125,7 @@ class GUIThread(Thread):
 
 			# Title Column
 			pygame.draw.rect(DISPLAY_SURFACE, *R_TITLE_C)
+			blitInRect(R_TITLE_C[1], T_TITLE1, T_TITLE2, T_TITLE3)
 
 			# Control Column (?)
 			pygame.draw.rect(DISPLAY_SURFACE, *R_CONTROL_C)
@@ -320,6 +321,15 @@ def updateLeaderboard():
 	for team in LEADERBOARD:
 		print(TEAM_DICT[team].__repr__().replace(':', "\t\t", 1))
 
+def blitInRect(rect, *elements):
+	totalY = sum([element.get_rect().height for element in elements[:-1]])
+	midX = rect.width // 2
+	midY = (rect.height // 2) - (totalY // 2)
+	for element in elements:
+		elementRect = element.get_rect(center = (midX, midY))
+		DISPLAY_SURFACE.blit(element, elementRect)
+		midY += elementRect.height
+
 ''''''#
 ''''''# Networking
 ''''''#
@@ -354,8 +364,8 @@ DISPLAY_SURFACE	= pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))#, pygam
 pygame.display.set_caption("Battle BABs - Server")
 
 # Fonts
-MAIN_FONT	= pygame.font.SysFont("monospace", 32, True)
-SMALL_FONT	= pygame.font.SysFont("monospace", 16, True)
+MAIN_FONT	= pygame.font.SysFont("monospace", 52, True)
+SMALL_FONT	= pygame.font.SysFont("monospace", 24, True)
 
 # Colours
 C_LGRAY	= ( 72,  96, 112)
@@ -367,32 +377,35 @@ C_CYAN	= ( 32, 196, 220)
 C_MINT	= ( 32, 255, 196)
 
 # Rects and Text
-R_TITLE_C		= (C_DGRAY,	(xUnit * 0,  yUnit * 0,  xUnit * 2,  yUnit * 5 ))
+R_TITLE_C		= (C_DGRAY,	pygame.Rect(xUnit * 0,  yUnit * 0,  xUnit * 2,  yUnit * 5 ))
+T_TITLE1		= MAIN_FONT.render("Battle", True, C_MINT)
+T_TITLE2		= MAIN_FONT.render("BABs", True, C_MINT)
+T_TITLE3		= MAIN_FONT.render(time.strftime("%Y"), True, C_MINT)
 
-R_CONTROL_C		= (C_CYAN,	(xUnit * 0,  yUnit * 5,  xUnit * 2,  yUnit * 4 ))
+R_CONTROL_C		= (C_CYAN,	pygame.Rect(xUnit * 0,  yUnit * 5,  xUnit * 2,  yUnit * 4 ))
 
-R_LEADERBOARD_R	= (C_DGRAY,	(xUnit * 2,  yUnit * 0,  xUnit * 10, yUnit * 1 ))
+R_LEADERBOARD_R	= (C_DGRAY,	pygame.Rect(xUnit * 2,  yUnit * 0,  xUnit * 10, yUnit * 1 ))
 
-R_RANK_R		= (C_MGRAY,	(xUnit * 2,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
-R_RANK_C		= (C_GRAY1,	(xUnit * 2,  yUnit * 2,  xUnit * 1,  yUnit * 7 ))
+R_RANK_R		= (C_MGRAY,	pygame.Rect(xUnit * 2,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
+R_RANK_C		= (C_GRAY1,	pygame.Rect(xUnit * 2,  yUnit * 2,  xUnit * 1,  yUnit * 7 ))
 
-R_NAME_R		= (C_MGRAY,	(xUnit * 3,  yUnit * 1,  xUnit * 3,  yUnit * 1 ))
-R_NAME_C		= (C_GRAY2,	(xUnit * 3,  yUnit * 2,  xUnit * 3,  yUnit * 7 ))
+R_NAME_R		= (C_MGRAY,	pygame.Rect(xUnit * 3,  yUnit * 1,  xUnit * 3,  yUnit * 1 ))
+R_NAME_C		= (C_GRAY2,	pygame.Rect(xUnit * 3,  yUnit * 2,  xUnit * 3,  yUnit * 7 ))
 
-R_SCORE_R		= (C_MGRAY,	(xUnit * 6,  yUnit * 1,  xUnit * 2,  yUnit * 1 ))
-R_SCORE_C		= (C_GRAY1,	(xUnit * 6,  yUnit * 2,  xUnit * 2,  yUnit * 7 ))
+R_SCORE_R		= (C_MGRAY,	pygame.Rect(xUnit * 6,  yUnit * 1,  xUnit * 2,  yUnit * 1 ))
+R_SCORE_C		= (C_GRAY1,	pygame.Rect(xUnit * 6,  yUnit * 2,  xUnit * 2,  yUnit * 7 ))
 
-R_MPLAYED_R		= (C_MGRAY,	(xUnit * 8,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
-R_MPLAYED_C		= (C_GRAY2,	(xUnit * 8,  yUnit * 2,  xUnit * 1,  yUnit * 7 ))
+R_MPLAYED_R		= (C_MGRAY,	pygame.Rect(xUnit * 8,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
+R_MPLAYED_C		= (C_GRAY2,	pygame.Rect(xUnit * 8,  yUnit * 2,  xUnit * 1,  yUnit * 7 ))
 
-R_MWON_R		= (C_MGRAY,	(xUnit * 9,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
-R_MWON_C		= (C_GRAY1,	(xUnit * 9,  yUnit * 2,  xUnit * 1,  yUnit * 7 ))
+R_MWON_R		= (C_MGRAY,	pygame.Rect(xUnit * 9,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
+R_MWON_C		= (C_GRAY1,	pygame.Rect(xUnit * 9,  yUnit * 2,  xUnit * 1,  yUnit * 7 ))
 
-R_BSCORE_R		= (C_MGRAY,	(xUnit * 10, yUnit * 1,  xUnit * 2,  yUnit * 1 ))
-R_BSCORE_C		= (C_GRAY2,	(xUnit * 10, yUnit * 2,  xUnit * 2,  yUnit * 7 ))
+R_BSCORE_R		= (C_MGRAY,	pygame.Rect(xUnit * 10, yUnit * 1,  xUnit * 2,  yUnit * 1 ))
+R_BSCORE_C		= (C_GRAY2,	pygame.Rect(xUnit * 10, yUnit * 2,  xUnit * 2,  yUnit * 7 ))
 
-R_MATCHES_R		= (C_DGRAY,	(xUnit * 12, yUnit * 0,  xUnit * 4,  yUnit * 1 ))
-R_MATCHES_C		= (C_LGRAY,	(xUnit * 12, yUnit * 1,  xUnit * 4,  yUnit * 8 ))
+R_MATCHES_R		= (C_DGRAY,	pygame.Rect(xUnit * 12, yUnit * 0,  xUnit * 4,  yUnit * 1 ))
+R_MATCHES_C		= (C_LGRAY,	pygame.Rect(xUnit * 12, yUnit * 1,  xUnit * 4,  yUnit * 8 ))
 
 ''''''#
 ''''''# Run!
