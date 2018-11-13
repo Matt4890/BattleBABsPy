@@ -70,6 +70,7 @@ class ServerThread(Thread):
 			elif cookedData == "RESET":
 				SOCK.sendto("RESET_MATCHES".encode('ascii'), (UDP_IP, UDP_PORT))
 				SOCK.sendto("RESET_SCORES".encode('ascii'), (UDP_IP, UDP_PORT))
+				continue
 
 			# If the message has the potential to be formatted as a scoring message...
 			elif cookedData.count(":") == cookedData.count(",") + 1:
@@ -77,7 +78,8 @@ class ServerThread(Thread):
 				match	= []
 				scores	= []
 
-				# Fracture data for easy world domination... I mean for easy "manipulation"... Mostly to check the teams are real first.
+				# Fracture data for easy world domination... I mean for easy "manipulation"...
+				# Mostly to check the teams are real first.
 				for msg in msgs:
 					team, score = msg.split(":")
 					team, score = team.upper(), int(score)
@@ -210,7 +212,7 @@ def saveTeamData():
 	fileHandle	= open(getDataFilePath() + "/teams.txt", "w")
 	fileHandle.writelines(dataLines)
 	fileHandle.close()
-	
+
 	updateLeaderboard()
 
 """
@@ -248,7 +250,7 @@ def getNextMatch():
 			match = line.strip()
 			break
 	match = "NONE" if match == "" else match
-	
+
 	return match
 
 """
@@ -285,7 +287,7 @@ def updateLeaderboard():
 	LEADERBOARD = sorted(TEAM_DICT, key=lambda team: TEAM_DICT[team].score, reverse=True)
 	print("Leaderboard updated. Current ranking:")
 	for team in LEADERBOARD:
-		print(team, "\t\t", TEAM_DICT[team])
+		print(team + "\t\t" + TEAM_DICT[team].__repr__().split(':', 1)[1])
 
 ''''''#
 ''''''# Networking
