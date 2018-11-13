@@ -330,11 +330,23 @@ def updateLeaderboard():
 	for team in LEADERBOARD:
 		print(TEAM_DICT[team].__repr__().replace(':', "\t\t", 1))
 
-def blitInRect(rect, font, colour, *strings):
+"""
+Renders and blits a series of strings in the centre of a rect.
+If multiple strings are given, they are blitted in a column of descending order.
+The whole column of blitted text is still centred perfect in the rect.
+The starting y value of the column of text can be overridden.
+
+rect		: The rect to draw the text into.
+font		: The font to render the text with.
+colour		: The colour to render the text in.
+*strings	: A series of strings the render and blit into the rect.
+startingY	: If overridden, this will be the y value the first string is centred on.
+"""
+def blitInRect(rect, font, colour, *strings, startingY=-1):
 	elements = [font.render(string, True, colour) for string in strings]
 	totalY = sum([element.get_rect().height for element in elements[:-1]])
 	midX = rect.width // 2
-	midY = (rect.height // 2) - (totalY // 2)
+	midY = (rect.height // 2) - (totalY // 2) if startingY < 0 else startingY
 	for element in elements:
 		elementRect = element.get_rect(center = (rect.x + midX, rect.y + midY))
 		DISPLAY_SURFACE.blit(element, elementRect)
