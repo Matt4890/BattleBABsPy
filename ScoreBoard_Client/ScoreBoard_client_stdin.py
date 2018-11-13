@@ -1,5 +1,9 @@
 """
-Desc.
+This is a terminal-based client for BattleBABs.
+It runs in a terminal, sending commands to the server that are input via stdin.
+Commands may be strung together in one line using the pipe '|' character.
+
+Author: Matthew Allwright
 """
 
 ''''''#
@@ -18,16 +22,32 @@ UDP_PORT = 5005
 
 SOCK = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
+recievingCmds = ["NEXT_MATCH"]
+
+''''''#
+''''''# Functions
+''''''#
+
+"""
+Sends a command to the global socket.
+
+cmd:	A string command.
+"""
+def sendCmd(cmd):
+
+	# Send the command
+	SOCK.sendto(cmd.encode('ascii'), (UDP_IP, UDP_PORT))
+
+	# Recieve data back from the server if applicable
+	if cmd.strip().upper() in recievingCmds:
+		rawData, addr = SOCK.recvfrom(1024)
+		print(rawData.decode("ascii"))
+
 ''''''#
 ''''''# Client Loop
 ''''''#
 
 for line in sys.stdin:
-	if '|' in line:
-		for msg in line.split('|'):
-			SOCK.sendto(msg.encode('ascii'), (UDP_IP, UDP_PORT))
-	else:
-		SOCK.sendto(line.encode('ascii'), (UDP_IP, UDP_PORT))
-		if line.strip() == "NEXT_MATCH":
-			rawData, addr = SOCK.recvfrom(1024)
-			print(rawData.decode("ascii"))
+	line = line.split('|')
+	for cmd in line:
+		sendCmd(cmd)
