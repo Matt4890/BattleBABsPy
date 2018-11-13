@@ -125,28 +125,37 @@ class GUIThread(Thread):
 
 			# Title Column
 			pygame.draw.rect(DISPLAY_SURFACE, *R_TITLE_C)
-			blitInRect(R_TITLE_C[1], T_TITLE1, T_TITLE2, T_TITLE3)
+			blitInRect(R_TITLE_C[1], MAIN_FONT, C_MINT, "Battle", "BABs", time.strftime("%Y"))
 
 			# Control Column (?)
 			pygame.draw.rect(DISPLAY_SURFACE, *R_CONTROL_C)
 
 			# Leaderboard
 			pygame.draw.rect(DISPLAY_SURFACE, *R_LEADERBOARD_R)
+			blitInRect(R_LEADERBOARD_R[1], MAIN_FONT, C_MINT, "Leaderboard")
 			pygame.draw.rect(DISPLAY_SURFACE, *R_RANK_R)
-			pygame.draw.rect(DISPLAY_SURFACE, *R_RANK_C)
+			blitInRect(R_RANK_R[1], MAIN_FONT, C_MINT, '#')
 			pygame.draw.rect(DISPLAY_SURFACE, *R_NAME_R)
-			pygame.draw.rect(DISPLAY_SURFACE, *R_NAME_C)
+			blitInRect(R_NAME_R[1], MAIN_FONT, C_MINT, "Team")
 			pygame.draw.rect(DISPLAY_SURFACE, *R_SCORE_R)
-			pygame.draw.rect(DISPLAY_SURFACE, *R_SCORE_C)
+			blitInRect(R_SCORE_R[1], MAIN_FONT, C_MINT, "Score")
 			pygame.draw.rect(DISPLAY_SURFACE, *R_MPLAYED_R)
-			pygame.draw.rect(DISPLAY_SURFACE, *R_MPLAYED_C)
+			blitInRect(R_MPLAYED_R[1], SMALL_FONT, C_MINT, "Matches", "Played")
 			pygame.draw.rect(DISPLAY_SURFACE, *R_MWON_R)
-			pygame.draw.rect(DISPLAY_SURFACE, *R_MWON_C)
+			blitInRect(R_MWON_R[1], SMALL_FONT, C_MINT, "Matches", "Won")
 			pygame.draw.rect(DISPLAY_SURFACE, *R_BSCORE_R)
+			blitInRect(R_BSCORE_R[1], SMALL_FONT, C_MINT, "Balanced", "Score")
+
+			pygame.draw.rect(DISPLAY_SURFACE, *R_RANK_C)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_NAME_C)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_SCORE_C)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_MPLAYED_C)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_MWON_C)
 			pygame.draw.rect(DISPLAY_SURFACE, *R_BSCORE_C)
 
 			# Match List
 			pygame.draw.rect(DISPLAY_SURFACE, *R_MATCHES_R)
+			blitInRect(R_MATCHES_R[1], MAIN_FONT, C_MINT, "Match List")
 			pygame.draw.rect(DISPLAY_SURFACE, *R_MATCHES_C)
 
 			# Buttons
@@ -321,12 +330,13 @@ def updateLeaderboard():
 	for team in LEADERBOARD:
 		print(TEAM_DICT[team].__repr__().replace(':', "\t\t", 1))
 
-def blitInRect(rect, *elements):
+def blitInRect(rect, font, colour, *strings):
+	elements = [font.render(string, True, colour) for string in strings]
 	totalY = sum([element.get_rect().height for element in elements[:-1]])
 	midX = rect.width // 2
 	midY = (rect.height // 2) - (totalY // 2)
 	for element in elements:
-		elementRect = element.get_rect(center = (midX, midY))
+		elementRect = element.get_rect(center = (rect.x + midX, rect.y + midY))
 		DISPLAY_SURFACE.blit(element, elementRect)
 		midY += elementRect.height
 
@@ -376,11 +386,8 @@ C_GRAY2	= ( 60,  80,  96)
 C_CYAN	= ( 32, 196, 220)
 C_MINT	= ( 32, 255, 196)
 
-# Rects and Text
+# Rects
 R_TITLE_C		= (C_DGRAY,	pygame.Rect(xUnit * 0,  yUnit * 0,  xUnit * 2,  yUnit * 5 ))
-T_TITLE1		= MAIN_FONT.render("Battle", True, C_MINT)
-T_TITLE2		= MAIN_FONT.render("BABs", True, C_MINT)
-T_TITLE3		= MAIN_FONT.render(time.strftime("%Y"), True, C_MINT)
 
 R_CONTROL_C		= (C_CYAN,	pygame.Rect(xUnit * 0,  yUnit * 5,  xUnit * 2,  yUnit * 4 ))
 
