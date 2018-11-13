@@ -11,6 +11,7 @@ import pygame
 import random
 import socket
 from threading import Thread
+import time
 
 ''''''#
 ''''''# Thread Classes
@@ -110,20 +111,6 @@ class GUIThread(Thread):
 	def __init__(self):
 		Thread.__init__(self)
 
-		xUnit	= WINDOW_WIDTH // 16
-		yUnit	= WINDOW_HEIGHT // 9
-
-		self.r_titleColumn		= (C_DGRAY,	(xUnit * 0,  yUnit * 0,  xUnit * 2,  yUnit * 5 ))
-		self.r_controlColumn	= (C_CYAN,	(xUnit * 0,  yUnit * 5,  xUnit * 2,  yUnit * 9 ))
-		self.r_leaderboardTitle	= (C_CYAN,	(xUnit * 2,  yUnit * 0,  xUnit * 10, yUnit * 1 ))
-		self.r_teamNumber		= (C_DGRAY,	(xUnit * 2,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
-		self.r_teamName			= (C_MGRAY,	(xUnit * 3,  yUnit * 1,  xUnit * 3,  yUnit * 1 ))
-		self.r_teamScore		= (C_DGRAY,	(xUnit * 6,  yUnit * 1,  xUnit * 2,  yUnit * 1 ))
-		self.r_numMatchesPlayed	= (C_MGRAY,	(xUnit * 8,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
-		self.r_numMatchesWon	= (C_DGRAY,	(xUnit * 9,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
-		self.r_teamMeanScore	= (C_MGRAY,	(xUnit * 10, yUnit * 1,  xUnit * 2,  yUnit * 1 ))
-		self.r_matchesTitle		= (C_DGRAY,	(xUnit * 12, yUnit * 0,  xUnit * 4,  yUnit * 1 ))
-
 	def run(self):
 		"""
 		Does a thing.
@@ -137,28 +124,35 @@ class GUIThread(Thread):
 			DISPLAY_SURFACE.fill(C_LGRAY)
 
 			# Title Column
-			pygame.draw.rect(DISPLAY_SURFACE, *self.r_titleColumn)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_TITLE_C)
 
 			# Control Column (?)
-			pygame.draw.rect(DISPLAY_SURFACE, *self.r_controlColumn)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_CONTROL_C)
 
 			# Leaderboard
-			pygame.draw.rect(DISPLAY_SURFACE, *self.r_leaderboardTitle)
-			pygame.draw.rect(DISPLAY_SURFACE, *self.r_teamNumber)
-			pygame.draw.rect(DISPLAY_SURFACE, *self.r_teamName)
-			pygame.draw.rect(DISPLAY_SURFACE, *self.r_teamScore)
-			pygame.draw.rect(DISPLAY_SURFACE, *self.r_numMatchesPlayed)
-			pygame.draw.rect(DISPLAY_SURFACE, *self.r_numMatchesWon)
-			pygame.draw.rect(DISPLAY_SURFACE, *self.r_teamMeanScore)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_LEADERBOARD_R)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_RANK_R)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_RANK_C)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_NAME_R)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_NAME_C)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_SCORE_R)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_SCORE_C)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_MPLAYED_R)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_MPLAYED_C)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_MWON_R)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_MWON_C)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_BSCORE_R)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_BSCORE_C)
 
 			# Match List
-			pygame.draw.rect(DISPLAY_SURFACE, *self.r_matchesTitle)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_MATCHES_R)
+			pygame.draw.rect(DISPLAY_SURFACE, *R_MATCHES_C)
 
 			# Buttons
 
 			# Display Updates
 			pygame.display.update()
-
+			time.sleep(1)
 
 ''''''#
 ''''''# Generic Classes
@@ -313,7 +307,7 @@ def updateLeaderboard():
 	LEADERBOARD = sorted(TEAM_DICT, key=lambda team: TEAM_DICT[team].score, reverse=True)
 	print("Leaderboard updated. Current ranking:")
 	for team in LEADERBOARD:
-		print(team + "\t\t" + TEAM_DICT[team].__repr__().split(':', 1)[1])
+		print(TEAM_DICT[team].__repr__().replace(':', "\t\t", 1))
 
 ''''''#
 ''''''# Networking
@@ -337,22 +331,57 @@ updateLeaderboard()
 ''''''# PyGame GUI Data
 ''''''#
 
+# Init
 pygame.init()
 
+# Window Parameters
 WINDOW_WIDTH	= 1920
 WINDOW_HEIGHT	= 1080
+xUnit			= WINDOW_WIDTH // 16
+yUnit			= WINDOW_HEIGHT // 9
 DISPLAY_SURFACE	= pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))#, pygame.FULLSCREEN) <-- Use for fullscreen
 pygame.display.set_caption("Battle BABs - Server")
 
+# Fonts
 MAIN_FONT	= pygame.font.SysFont("monospace", 32, True)
 SMALL_FONT	= pygame.font.SysFont("monospace", 16, True)
 
 # Colours
-C_LGRAY	= ( 84, 108, 132)
-C_MGRAY	= ( 56,  72,  88)
+C_LGRAY	= ( 72,  96, 112)
+C_MGRAY	= ( 48,  64,  80)
 C_DGRAY	= ( 28,  36,  44)
+C_GRAY1	= ( 52,  72,  88)
+C_GRAY2	= ( 60,  80,  96)
 C_CYAN	= ( 32, 196, 220)
 C_MINT	= ( 32, 255, 196)
+
+# Rects and Text
+R_TITLE_C		= (C_DGRAY,	(xUnit * 0,  yUnit * 0,  xUnit * 2,  yUnit * 5 ))
+
+R_CONTROL_C		= (C_CYAN,	(xUnit * 0,  yUnit * 5,  xUnit * 2,  yUnit * 4 ))
+
+R_LEADERBOARD_R	= (C_DGRAY,	(xUnit * 2,  yUnit * 0,  xUnit * 10, yUnit * 1 ))
+
+R_RANK_R		= (C_MGRAY,	(xUnit * 2,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
+R_RANK_C		= (C_GRAY1,	(xUnit * 2,  yUnit * 2,  xUnit * 1,  yUnit * 7 ))
+
+R_NAME_R		= (C_MGRAY,	(xUnit * 3,  yUnit * 1,  xUnit * 3,  yUnit * 1 ))
+R_NAME_C		= (C_GRAY2,	(xUnit * 3,  yUnit * 2,  xUnit * 3,  yUnit * 7 ))
+
+R_SCORE_R		= (C_MGRAY,	(xUnit * 6,  yUnit * 1,  xUnit * 2,  yUnit * 1 ))
+R_SCORE_C		= (C_GRAY1,	(xUnit * 6,  yUnit * 2,  xUnit * 2,  yUnit * 7 ))
+
+R_MPLAYED_R		= (C_MGRAY,	(xUnit * 8,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
+R_MPLAYED_C		= (C_GRAY2,	(xUnit * 8,  yUnit * 2,  xUnit * 1,  yUnit * 7 ))
+
+R_MWON_R		= (C_MGRAY,	(xUnit * 9,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
+R_MWON_C		= (C_GRAY1,	(xUnit * 9,  yUnit * 2,  xUnit * 1,  yUnit * 7 ))
+
+R_BSCORE_R		= (C_MGRAY,	(xUnit * 10, yUnit * 1,  xUnit * 2,  yUnit * 1 ))
+R_BSCORE_C		= (C_GRAY2,	(xUnit * 10, yUnit * 2,  xUnit * 2,  yUnit * 7 ))
+
+R_MATCHES_R		= (C_DGRAY,	(xUnit * 12, yUnit * 0,  xUnit * 4,  yUnit * 1 ))
+R_MATCHES_C		= (C_LGRAY,	(xUnit * 12, yUnit * 1,  xUnit * 4,  yUnit * 8 ))
 
 ''''''#
 ''''''# Run!
