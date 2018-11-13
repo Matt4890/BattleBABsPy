@@ -51,6 +51,7 @@ class ServerThread(Thread):
 				print("Resetting team scores to 0...")
 				for team in TEAM_DICT:
 					TEAM_DICT[team].score = 0
+					TEAM_DICT[team].updateBalancedScore()
 				saveTeamData()
 				print("Done.")
 				continue
@@ -63,6 +64,7 @@ class ServerThread(Thread):
 				for team in TEAM_DICT:
 					TEAM_DICT[team].matchesPlayed = 0
 					TEAM_DICT[team].matchesWon = 0
+					TEAM_DICT[team].updateBalancedScore()
 				print("Done.")
 				updateLeaderboard()
 				continue
@@ -92,9 +94,7 @@ class ServerThread(Thread):
 					winningScore = max(scores)
 					for i in range(0, len(match)):
 						team = TEAM_DICT[match[i]]
-						team.score += scores[i]
-						team.matchesPlayed += 1
-						if scores[i] == winningScore: team.matchesWon += 1
+						team.addMatch(scores[i], scores[i] == winningScore)
 						print("Team '%s' given %i point(s), now has %i point(s)." % (match[i], scores[i], team.score))
 					setMatchCompleted(match)
 					saveTeamData()
@@ -165,14 +165,25 @@ class Team():
 		self.score			= score
 		self.matchesPlayed	= matchesPlayed
 		self.matchesWon		= matchesWon
+		self.updateBalancedScore()
 
 	def __repr__(self):
-		return "%s:%i:%i:%i" % (
+		return "%s:%i:%i:%i:%i" % (
 			self.name,
 			self.score,
 			self.matchesPlayed,
-			self.matchesWon
+			self.matchesWon,
+			self.balancedScore
 		)
+
+	def updateBalancedScore(self):
+		self.balancedScore	= self.score // self.matchesPlayed if self.matchesPlayed > 0 else 0
+
+	def addMatch(self, score, won):
+		self.score			+= score
+		self.matchesPlayed	+= 1
+		self.matchesWon		+= 1 if won else 0
+		self.updateBalancedScore()
 
 ''''''#
 ''''''# Functions
@@ -185,7 +196,7 @@ def constructTeamFromStr(string):
 	rawBits = string.split(":")
 	cookedBits = []
 	try:
-		cookedBits = [rawBits[0].upper(), *[int(bit) for bit in rawBits[1:]]]
+		cookedBits = [rawBits[0].upper(), *[int(bit) for bit in rawBits[1:-1]]]
 	except Exception as e:
 		raise ValueError("Cannot format string into team. Must be formatted 'NAME:SCORE:MATCHES_PLAYED:MATCHES_WON'.")
 		print("OwO what's this?")
