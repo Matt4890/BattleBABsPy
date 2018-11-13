@@ -110,6 +110,20 @@ class GUIThread(Thread):
 	def __init__(self):
 		Thread.__init__(self)
 
+		xUnit	= WINDOW_WIDTH // 16
+		yUnit	= WINDOW_HEIGHT // 9
+
+		self.r_titleColumn		= (C_DGRAY,	(xUnit * 0,  yUnit * 0,  xUnit * 2,  yUnit * 5 ))
+		self.r_controlColumn	= (C_CYAN,	(xUnit * 0,  yUnit * 5,  xUnit * 2,  yUnit * 9 ))
+		self.r_leaderboardTitle	= (C_CYAN,	(xUnit * 2,  yUnit * 0,  xUnit * 10, yUnit * 1 ))
+		self.r_teamNumber		= (C_DGRAY,	(xUnit * 2,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
+		self.r_teamName			= (C_MGRAY,	(xUnit * 3,  yUnit * 1,  xUnit * 3,  yUnit * 1 ))
+		self.r_teamScore		= (C_DGRAY,	(xUnit * 6,  yUnit * 1,  xUnit * 2,  yUnit * 1 ))
+		self.r_numMatchesPlayed	= (C_MGRAY,	(xUnit * 8,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
+		self.r_numMatchesWon	= (C_DGRAY,	(xUnit * 9,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
+		self.r_teamMeanScore	= (C_MGRAY,	(xUnit * 10, yUnit * 1,  xUnit * 2,  yUnit * 1 ))
+		self.r_matchesTitle		= (C_DGRAY,	(xUnit * 12, yUnit * 0,  xUnit * 4,  yUnit * 1 ))
+
 	def run(self):
 		"""
 		Does a thing.
@@ -120,13 +134,25 @@ class GUIThread(Thread):
 			width, height = DISPLAY_SURFACE.get_size()
 
 			# Background
-			DISPLAY_SURFACE.fill((56, 72, 88))
+			DISPLAY_SURFACE.fill(C_LGRAY)
 
-			# Title Bar
+			# Title Column
+			pygame.draw.rect(DISPLAY_SURFACE, *self.r_titleColumn)
+
+			# Control Column (?)
+			pygame.draw.rect(DISPLAY_SURFACE, *self.r_controlColumn)
 
 			# Leaderboard
+			pygame.draw.rect(DISPLAY_SURFACE, *self.r_leaderboardTitle)
+			pygame.draw.rect(DISPLAY_SURFACE, *self.r_teamNumber)
+			pygame.draw.rect(DISPLAY_SURFACE, *self.r_teamName)
+			pygame.draw.rect(DISPLAY_SURFACE, *self.r_teamScore)
+			pygame.draw.rect(DISPLAY_SURFACE, *self.r_numMatchesPlayed)
+			pygame.draw.rect(DISPLAY_SURFACE, *self.r_numMatchesWon)
+			pygame.draw.rect(DISPLAY_SURFACE, *self.r_teamMeanScore)
 
 			# Match List
+			pygame.draw.rect(DISPLAY_SURFACE, *self.r_matchesTitle)
 
 			# Buttons
 
@@ -310,7 +336,7 @@ updateLeaderboard()
 ''''''#
 ''''''# PyGame GUI Data
 ''''''#
-"""
+
 pygame.init()
 
 WINDOW_WIDTH	= 1920
@@ -320,7 +346,14 @@ pygame.display.set_caption("Battle BABs - Server")
 
 MAIN_FONT	= pygame.font.SysFont("monospace", 32, True)
 SMALL_FONT	= pygame.font.SysFont("monospace", 16, True)
-"""
+
+# Colours
+C_LGRAY	= ( 84, 108, 132)
+C_MGRAY	= ( 56,  72,  88)
+C_DGRAY	= ( 28,  36,  44)
+C_CYAN	= ( 32, 196, 220)
+C_MINT	= ( 32, 255, 196)
+
 ''''''#
 ''''''# Run!
 ''''''#
@@ -330,5 +363,5 @@ GameController = ServerThread()
 GameController.start()
 
 # Start the GUI controller
-# GUIController = GUIThread()
-# GUIController.start()
+GUIController = GUIThread()
+GUIController.start()
