@@ -125,20 +125,25 @@ class GUIThread(Thread):
 
 			# Title Column
 			pygame.draw.rect(DISPLAY_SURFACE, *R_TITLE_C)
-			blitInRect(R_TITLE_C[1], MAIN_FONT, C_MINT, "Battle", "BABs", time.strftime("%Y"))
+			blitInRect(R_TITLE_C[1], LARGE_FONT
+		, C_MINT, "Battle", "BABs", time.strftime("%Y"))
 
 			# Control Column (?)
 			pygame.draw.rect(DISPLAY_SURFACE, *R_CONTROL_C)
 
 			# Leaderboard
 			pygame.draw.rect(DISPLAY_SURFACE, *R_LEADERBOARD_R)
-			blitInRect(R_LEADERBOARD_R[1], MAIN_FONT, C_MINT, "Leaderboard")
+			blitInRect(R_LEADERBOARD_R[1], LARGE_FONT
+		, C_MINT, "Leaderboard")
 			pygame.draw.rect(DISPLAY_SURFACE, *R_RANK_R)
-			blitInRect(R_RANK_R[1], MAIN_FONT, C_MINT, '#')
+			blitInRect(R_RANK_R[1], LARGE_FONT
+		, C_MINT, '#')
 			pygame.draw.rect(DISPLAY_SURFACE, *R_NAME_R)
-			blitInRect(R_NAME_R[1], MAIN_FONT, C_MINT, "Team")
+			blitInRect(R_NAME_R[1], LARGE_FONT
+		, C_MINT, "Team")
 			pygame.draw.rect(DISPLAY_SURFACE, *R_SCORE_R)
-			blitInRect(R_SCORE_R[1], MAIN_FONT, C_MINT, "Score")
+			blitInRect(R_SCORE_R[1], LARGE_FONT
+		, C_MINT, "Score")
 			pygame.draw.rect(DISPLAY_SURFACE, *R_MPLAYED_R)
 			blitInRect(R_MPLAYED_R[1], SMALL_FONT, C_MINT, "Matches", "Played")
 			pygame.draw.rect(DISPLAY_SURFACE, *R_MWON_R)
@@ -155,7 +160,8 @@ class GUIThread(Thread):
 
 			# Match List
 			pygame.draw.rect(DISPLAY_SURFACE, *R_MATCHES_R)
-			blitInRect(R_MATCHES_R[1], MAIN_FONT, C_MINT, "Match List")
+			blitInRect(R_MATCHES_R[1], LARGE_FONT
+		, C_MINT, "Match List")
 			pygame.draw.rect(DISPLAY_SURFACE, *R_MATCHES_C)
 
 			# Buttons
@@ -386,7 +392,7 @@ DISPLAY_SURFACE	= pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))#, pygam
 pygame.display.set_caption("Battle BABs - Server")
 
 # Fonts
-MAIN_FONT	= pygame.font.SysFont("monospace", 52, True)
+LARGE_FONT	= pygame.font.SysFont("monospace", 52, True)
 SMALL_FONT	= pygame.font.SysFont("monospace", 24, True)
 
 # Colours
