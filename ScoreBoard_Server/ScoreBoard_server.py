@@ -111,55 +111,61 @@ class GUIThread(Thread):
 	def __init__(self):
 		Thread.__init__(self)
 
+		# Title Column
+		pygame.draw.rect(DISPLAY_SURFACE, *R_TITLE_C)
+		blitInRect(R_TITLE_C[1], LARGE_FONT, C_MINT, "Battle", "BABs", time.strftime("%Y"))
+
+		# Control Column (?)
+		pygame.draw.rect(DISPLAY_SURFACE, *R_CONTROL_C)
+
+		# Leaderboard
+		pygame.draw.rect(DISPLAY_SURFACE, *R_LEADERBOARD_R)
+		blitInRect(R_LEADERBOARD_R[1], LARGE_FONT, C_MINT, "Leaderboard")
+		pygame.draw.rect(DISPLAY_SURFACE, *R_RANK_R)
+		blitInRect(R_RANK_R[1], LARGE_FONT, C_MINT, '#')
+		pygame.draw.rect(DISPLAY_SURFACE, *R_NAME_R)
+		blitInRect(R_NAME_R[1], LARGE_FONT, C_MINT, "Team")
+		pygame.draw.rect(DISPLAY_SURFACE, *R_SCORE_R)
+		blitInRect(R_SCORE_R[1], LARGE_FONT, C_MINT, "Score")
+		pygame.draw.rect(DISPLAY_SURFACE, *R_MPLAYED_R)
+		blitInRect(R_MPLAYED_R[1], SMALL_FONT, C_MINT, "Matches", "Played")
+		pygame.draw.rect(DISPLAY_SURFACE, *R_MWON_R)
+		blitInRect(R_MWON_R[1], SMALL_FONT, C_MINT, "Matches", "Won")
+		pygame.draw.rect(DISPLAY_SURFACE, *R_BSCORE_R)
+		blitInRect(R_BSCORE_R[1], SMALL_FONT, C_MINT, "Balanced", "Score")
+
+		# Match List
+		pygame.draw.rect(DISPLAY_SURFACE, *R_MATCHES_R)
+		blitInRect(R_MATCHES_R[1], LARGE_FONT, C_MINT, "Match List")
+
 	def run(self):
 		"""
 		Does a thing.
 		"""
 		while True:
 
-			# Update some variables
-			width, height = DISPLAY_SURFACE.get_size()
-
-			# Background
-			DISPLAY_SURFACE.fill(C_LGRAY)
-
-			# Title Column
-			pygame.draw.rect(DISPLAY_SURFACE, *R_TITLE_C)
-			blitInRect(R_TITLE_C[1], LARGE_FONT, C_MINT, "Battle", "BABs", time.strftime("%Y"))
-
-			# Control Column (?)
-			pygame.draw.rect(DISPLAY_SURFACE, *R_CONTROL_C)
-
 			# Leaderboard
-			pygame.draw.rect(DISPLAY_SURFACE, *R_LEADERBOARD_R)
-			blitInRect(R_LEADERBOARD_R[1], LARGE_FONT, C_MINT, "Leaderboard")
-			pygame.draw.rect(DISPLAY_SURFACE, *R_RANK_R)
-			blitInRect(R_RANK_R[1], LARGE_FONT, C_MINT, '#')
-			pygame.draw.rect(DISPLAY_SURFACE, *R_NAME_R)
-			blitInRect(R_NAME_R[1], LARGE_FONT, C_MINT, "Team")
-			pygame.draw.rect(DISPLAY_SURFACE, *R_SCORE_R)
-			blitInRect(R_SCORE_R[1], LARGE_FONT, C_MINT, "Score")
-			pygame.draw.rect(DISPLAY_SURFACE, *R_MPLAYED_R)
-			blitInRect(R_MPLAYED_R[1], SMALL_FONT, C_MINT, "Matches", "Played")
-			pygame.draw.rect(DISPLAY_SURFACE, *R_MWON_R)
-			blitInRect(R_MWON_R[1], SMALL_FONT, C_MINT, "Matches", "Won")
-			pygame.draw.rect(DISPLAY_SURFACE, *R_BSCORE_R)
-			blitInRect(R_BSCORE_R[1], SMALL_FONT, C_MINT, "Balanced", "Score")
-
 			pygame.draw.rect(DISPLAY_SURFACE, *R_RANK_C)
-			blitColumn(R_RANK_C[1], *[str(i) for i in range(1,13)])
+			blitColumn(R_RANK_C[1], *[i for i in range(1,len(LEADERBOARD) + 1 if len(LEADERBOARD) < 12 else 13)])
+
 			pygame.draw.rect(DISPLAY_SURFACE, *R_NAME_C)
+			blitColumn(R_NAME_C[1], *[team for team in LEADERBOARD])
+
 			pygame.draw.rect(DISPLAY_SURFACE, *R_SCORE_C)
+			blitColumn(R_SCORE_C[1], *[TEAM_DICT[team].score for team in LEADERBOARD])
+
 			pygame.draw.rect(DISPLAY_SURFACE, *R_MPLAYED_C)
+			blitColumn(R_MPLAYED_C[1], *[TEAM_DICT[team].matchesPlayed for team in LEADERBOARD])
+
 			pygame.draw.rect(DISPLAY_SURFACE, *R_MWON_C)
+			blitColumn(R_MWON_C[1], *[TEAM_DICT[team].matchesWon for team in LEADERBOARD])
+
 			pygame.draw.rect(DISPLAY_SURFACE, *R_BSCORE_C)
+			blitColumn(R_BSCORE_C[1], *[TEAM_DICT[team].balancedScore for team in LEADERBOARD])
+
 
 			# Match List
-			pygame.draw.rect(DISPLAY_SURFACE, *R_MATCHES_R)
-			blitInRect(R_MATCHES_R[1], LARGE_FONT, C_MINT, "Match List")
 			pygame.draw.rect(DISPLAY_SURFACE, *R_MATCHES_C)
-
-			# Buttons
 
 			# Display Updates
 			pygame.display.update()
@@ -344,7 +350,7 @@ colour		: The colour to render the text in.
 startingY	: If overridden, this will be the y value the first string is centred on.
 """
 def blitInRect(rect, font, colour, *strings, startingY=-1, gapY=0):
-	elements = [font.render(string, True, colour) for string in strings]
+	elements = [font.render(str(string), True, colour) for string in strings]
 	totalY = sum([element.get_rect().height for element in elements[:-1]])
 	midX = rect.width // 2
 	midY = (rect.height // 2) - (totalY // 2) if startingY < 0 else startingY
