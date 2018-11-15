@@ -144,6 +144,11 @@ class GUIThread(Thread):
 		"""
 		while True:
 
+			# You shouldn't need to sort the leaderboard here... but it prints out of order if you don't?
+			# Apparently lists don't keep their order outside of a function?
+			# Or it thinks its a local variable in the function?
+			LEADERBOARD = sorted(TEAM_DICT, key=lambda team: TEAM_DICT[team].score, reverse=True)
+
 			# Leaderboard
 			pygame.draw.rect(DISPLAY_SURFACE, *R_RANK_C)
 			blitColumn(R_RANK_C[1], *[i for i in range(1,len(LEADERBOARD) + 1 if len(LEADERBOARD) < 12 else 13)])
