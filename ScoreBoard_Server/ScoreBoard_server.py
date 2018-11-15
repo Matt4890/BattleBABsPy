@@ -147,7 +147,7 @@ class GUIThread(Thread):
 			# You shouldn't need to sort the leaderboard here... but it prints out of order if you don't?
 			# Apparently lists don't keep their order outside of a function?
 			# Or it thinks its a local variable in the function?
-			LEADERBOARD = sorted(TEAM_DICT, key=lambda team: TEAM_DICT[team].score, reverse=True)
+			#LEADERBOARD = sorted(TEAM_DICT, key=lambda team: TEAM_DICT[team].score, reverse=True)
 
 			# Leaderboard
 			pygame.draw.rect(DISPLAY_SURFACE, *R_RANK_C)
@@ -168,9 +168,9 @@ class GUIThread(Thread):
 			pygame.draw.rect(DISPLAY_SURFACE, *R_BSCORE_C)
 			blitColumn(R_BSCORE_C[1], *[TEAM_DICT[team].balancedScore for team in LEADERBOARD])
 
-
 			# Match List
 			pygame.draw.rect(DISPLAY_SURFACE, *R_MATCHES_C)
+			blitColumn(R_MATCHES_C[1], *getMatchList())
 
 			# Display Updates
 			pygame.display.update()
@@ -286,6 +286,15 @@ def genNewMatches(teams):
 	fileHandle.writelines(matches)
 	fileHandle.close()
 
+def getMatchList():
+	fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
+	dataLines	= fileHandle.readlines()
+	fileHandle.close()
+
+	dataLines = [line.strip() for line in dataLines]
+
+	return dataLines
+
 """
 Finds and returns the next match in the 'matches.txt' file.
 A completed match is noted by a '~' as the first character of the line.
@@ -293,12 +302,8 @@ A completed match is noted by a '~' as the first character of the line.
 Returns : A string of the teams in the next match formatted as TEAM1:TEAM2.
 """
 def getNextMatch():
-	fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
-	dataLines	= fileHandle.readlines()
-	fileHandle.close()
-
 	match = ""
-	for line in dataLines:
+	for line in getMatchList():
 		if line[0] != "~":
 			match = line.strip()
 			break
@@ -337,6 +342,7 @@ Updates the global LEADERBOARD list.
 It is sorted by each team's score, largest to smallest.
 """
 def updateLeaderboard():
+	global LEADERBOARD
 	LEADERBOARD = sorted(TEAM_DICT, key=lambda team: TEAM_DICT[team].score, reverse=True)
 	print("Leaderboard updated. Current ranking:")
 	for team in LEADERBOARD:
