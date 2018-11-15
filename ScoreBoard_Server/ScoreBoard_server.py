@@ -147,6 +147,7 @@ class GUIThread(Thread):
 			blitInRect(R_BSCORE_R[1], SMALL_FONT, C_MINT, "Balanced", "Score")
 
 			pygame.draw.rect(DISPLAY_SURFACE, *R_RANK_C)
+			blitColumn(R_RANK_C[1], *[str(i) for i in range(1,13)])
 			pygame.draw.rect(DISPLAY_SURFACE, *R_NAME_C)
 			pygame.draw.rect(DISPLAY_SURFACE, *R_SCORE_C)
 			pygame.draw.rect(DISPLAY_SURFACE, *R_MPLAYED_C)
@@ -342,7 +343,7 @@ colour		: The colour to render the text in.
 *strings	: A series of strings the render and blit into the rect.
 startingY	: If overridden, this will be the y value the first string is centred on.
 """
-def blitInRect(rect, font, colour, *strings, startingY=-1):
+def blitInRect(rect, font, colour, *strings, startingY=-1, gapY=0):
 	elements = [font.render(string, True, colour) for string in strings]
 	totalY = sum([element.get_rect().height for element in elements[:-1]])
 	midX = rect.width // 2
@@ -350,7 +351,10 @@ def blitInRect(rect, font, colour, *strings, startingY=-1):
 	for element in elements:
 		elementRect = element.get_rect(center = (rect.x + midX, rect.y + midY))
 		DISPLAY_SURFACE.blit(element, elementRect)
-		midY += elementRect.height
+		midY += gapY + elementRect.height
+
+def blitColumn(rect, *rows):
+	blitInRect(rect, MEDIUM_FONT, C_CYAN, *rows, startingY=yUnit//2, gapY=yUnit//4)
 
 ''''''#
 ''''''# Networking
@@ -387,6 +391,7 @@ pygame.display.set_caption("Battle BABs - Server")
 
 # Fonts
 LARGE_FONT	= pygame.font.SysFont("monospace", 52, True)
+MEDIUM_FONT	= pygame.font.SysFont("monospace", 36, True)
 SMALL_FONT	= pygame.font.SysFont("monospace", 24, True)
 
 # Colours
