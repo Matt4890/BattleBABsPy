@@ -170,7 +170,7 @@ class GUIThread(Thread):
 
 			# Match List
 			pygame.draw.rect(DISPLAY_SURFACE, *R_MATCHES_C)
-			blitColumn(R_MATCHES_C[1], *getMatchList())
+			blitColumn(R_MATCHES_C[1], *[match if len(match) <= 21 else match[:7] + "..." + match[match.find(':'):match.find(':') + 8] + "..." for match in getMatchList()])
 
 			# Display Updates
 			pygame.display.update()
@@ -352,13 +352,13 @@ def updateLeaderboard():
 Renders and blits a series of strings in the centre of a rect.
 If multiple strings are given, they are blitted in a column of descending order.
 The whole column of blitted text is still centred perfect in the rect.
-The starting y value of the column of text can be overridden.
 
 rect		: The rect to draw the text into.
 font		: The font to render the text with.
 colour		: The colour to render the text in.
 *strings	: A series of strings the render and blit into the rect.
 startingY	: If overridden, this will be the y value the first string is centred on.
+gapY		: If overridden, this will be the gap between text elements (bottom to top)
 """
 def blitInRect(rect, font, colour, *strings, startingY=-1, gapY=0):
 	elements = [font.render(str(string), True, colour) for string in strings]
