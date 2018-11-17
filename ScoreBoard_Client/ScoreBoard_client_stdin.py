@@ -22,6 +22,7 @@ UDP_PORT = 5005
 
 SOCK = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
+# List of commands that should expect a message back from the server
 recievingCmds = ["NEXT_MATCH"]
 
 ''''''#
@@ -40,7 +41,7 @@ def sendCmd(cmd):
 
 	# Recieve data back from the server if applicable
 	if cmd.strip().upper() in recievingCmds:
-		rawData, addr = SOCK.recvfrom(1024)
+		rawData, addr = SOCK.recvfrom(1024) # 1kiB buffer size
 		print(rawData.decode("ascii"))
 
 ''''''#
@@ -48,6 +49,5 @@ def sendCmd(cmd):
 ''''''#
 
 for line in sys.stdin:
-	line = line.split('|')
-	for cmd in line:
+	for cmd in line.split('|'):
 		sendCmd(cmd)
