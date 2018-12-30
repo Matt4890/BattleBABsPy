@@ -172,9 +172,15 @@ class GUIThread(Thread):
 			pygame.draw.rect(DISPLAY_SURFACE, *R_MATCHES_C)
 			blitColumn(R_MATCHES_C[1], *[match if len(match) <= 21 else match[:7] + "..." + match[match.find(':'):match.find(':') + 8] + "..." for match in getMatchList()])
 
+			# Event Handling
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					pygame.quit()
+					quit()
+
 			# Display Updates
 			pygame.display.update()
-			time.sleep(1)
+			#time.sleep(1)
 
 ''''''#
 ''''''# Generic Classes
