@@ -17,10 +17,11 @@ import sys
 ''''''# Networking
 ''''''#
 
-UDP_IP = "127.0.0.1"
+UDP_IP = "255.255.255.255"
 UDP_PORT = 5005
 
 SOCK = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+SOCK.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1)
 
 # List of commands that should expect a message back from the server
 recievingCmds = ["NEXT_MATCH"]

@@ -377,10 +377,11 @@ def blitColumn(rect, *rows):
 ''''''# Networking
 ''''''#
 
-UDP_IP		= "127.0.0.1"
+UDP_IP		= "0.0.0.0"
 UDP_PORT	= 5005
 
 SOCK = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
 SOCK.bind((UDP_IP, UDP_PORT))
 
 ''''''#
@@ -403,7 +404,7 @@ WINDOW_WIDTH	= 1920
 WINDOW_HEIGHT	= 1080
 xUnit			= WINDOW_WIDTH // 16
 yUnit			= WINDOW_HEIGHT // 9
-DISPLAY_SURFACE	= pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))#, pygame.FULLSCREEN) <-- Use for fullscreen
+DISPLAY_SURFACE	= pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))#, pygame.FULLSCREEN)# <-- Use for fullscreen
 pygame.display.set_caption("Battle BABs - Server")
 
 # Fonts
