@@ -132,7 +132,8 @@ while True: #Main Loop
 			pygame.quit() #quit if so
 			quit()
 	time.sleep(0.02) #delay 20ms to prevent CPU usage
+	for line in sys.stdin:
+		for cmd in line.split('|'):
+			sendCmd(cmd)
 
-for line in sys.stdin:
-	for cmd in line.split('|'):
-		sendCmd(cmd)
+
