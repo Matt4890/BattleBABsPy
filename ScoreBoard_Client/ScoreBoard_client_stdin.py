@@ -14,6 +14,8 @@ import socket
 import sys
 import pygame
 import time
+from threading import Thread #threading for Timer functions
+
 
 ''''''#
 ''''''# Networking
@@ -27,6 +29,29 @@ SOCK.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1)
 
 # List of commands that should expect a message back from the server
 recievingCmds = ["NEXT_MATCH"]
+''''''#
+''''''# Thread Classes
+''''''#
+
+class TimerThread(Thread):
+	def __init__(self):
+		Thread.__init__(self)
+	
+	def run(self):
+		matchLength = 15 # match time in seconds, for ease of testing for now is set to 15 seconds
+		global timeRemain
+		for timer in range(matchLength, 0, -1):
+			timeRemain = timer
+			print("TimerTick!", timer)
+			time.sleep(1) #delay 1 second
+		# We are done counting down, send results to Leaderboard
+		timeRemain = 0
+		global NAME1
+		global NAME2
+		global SCORE1
+		global SCORE2 # This is really not a neat way to do this, get someone to look at this, maybe a CompSci student idk, it would be a good task for them :P
+		sendCmd(NAME1 + ":" + str(SCORE1) + "," + NAME2 + ":" + str(SCORE2))
+		return True
 
 ''''''#
 ''''''# Functions
@@ -107,6 +132,10 @@ C_MINT	= ( 32, 255, 196)
 
 NAME1 = "123456789ABCDEF"
 NAME2 = "Team2GoesHere"
+#Temp Placeholder scores
+SCORE1 = 10
+SCORE2 = 20
+timeRemain = 999
 
 # Rects
 R_SEP_C		    = (C_GRAY2,	pygame.Rect(xUnit * 2,  yUnit * 0,  xUnit * 1,  yUnit * 9 )) # Rectangle to Seperate Title and Stats
@@ -117,6 +146,11 @@ R_TIMETITLE_R   = (C_LGRAY,	pygame.Rect(xUnit * 7, 	yUnit * 1, 	xUnit * 5,	yUnit
 R_BORDER_C      = (C_MGRAY, pygame.Rect(xUnit * 3, 	yUnit * 1, 	xUnit * 13,	yUnit * 1 )) # Rectangle for Horizontal Border
 R_TEAM1_R       = (C_LGRAY, pygame.Rect(xUnit * 4, 	yUnit * 3, 	xUnit * 4,	yUnit * 1 )) # Rectangle for Team 1's Name
 R_TEAM2_R       = (C_LGRAY, pygame.Rect(xUnit * 11,	yUnit * 3, 	xUnit * 4,	yUnit * 1 )) # Rectangle for Team 2's Name
+R_SCORE1_R      = (C_LGRAY, pygame.Rect(xUnit * 4,	yUnit * 4, 	xUnit * 4,	yUnit * 1 )) # Rectangle for Team 1's Score
+R_SCORE2_R      = (C_LGRAY, pygame.Rect(xUnit * 11, yUnit * 4, 	xUnit * 4,	yUnit * 1 )) # Rectangle for Team 2's Score
+
+Time = TimerThread()
+Time.daemon = True # Will kill on main thread exit
 
 while True: #Main Loop
 	DISPLAY_SURFACE.fill(C_DGRAY) # "Clear" the Screen
@@ -126,13 +160,17 @@ while True: #Main Loop
 	pygame.draw.rect(DISPLAY_SURFACE, *R_TIMETITLE_R)
 	pygame.draw.rect(DISPLAY_SURFACE, *R_TEAM1_R)
 	pygame.draw.rect(DISPLAY_SURFACE, *R_TEAM2_R)
+	pygame.draw.rect(DISPLAY_SURFACE, *R_SCORE1_R)
+	pygame.draw.rect(DISPLAY_SURFACE, *R_SCORE2_R)
 	
 
-	blitInRect(R_TIMETITLE_R[1], MEDIUM_FONT, C_MINT, "Match Time Remaining:", "999" + " Seconds") # The "999" is just there as a placeholder for a timer variable
+	blitInRect(R_TIMETITLE_R[1], MEDIUM_FONT, C_MINT, "Match Time Remaining:", str(timeRemain) + " Seconds") # The "999" is just there as a placeholder for a timer variable
 	blitInRect(R_TITLE_C[1], LARGE_FONT, C_MINT, "Battle", "BABs", time.strftime("%Y"))
 	blitInRect(R_SCOREBOARD_R[1], MEDIUM_FONT, C_MINT, "Match: [" + NAME1 + "] VS [" + NAME2 + "]")
 	blitInRect(R_TEAM1_R[1], MEDIUM_FONT, C_MINT, NAME1)
 	blitInRect(R_TEAM2_R[1], MEDIUM_FONT, C_MINT, NAME2)
+	blitInRect(R_SCORE1_R[1], MEDIUM_FONT, C_MINT, str(SCORE1))
+	blitInRect(R_SCORE2_R[1], MEDIUM_FONT, C_MINT, str(SCORE2))
 
 	pygame.display.update() #Update display
 
@@ -140,7 +178,7 @@ while True: #Main Loop
 		if event.type == pygame.QUIT: #Check for QUIT event
 			pygame.quit() #quit if so
 			quit()
-		elif event.type == pygame.KEYDOWN: ##ease of testing events while keeping the GUI from crashing
+		elif event.type == pygame.KEYDOWN: ## Ease of testing events while keeping the GUI from crashing
 			if event.key == pygame.K_n:
 				sendCmd("next_match")
 			elif event.key == pygame.K_r:
@@ -149,6 +187,12 @@ while True: #Main Loop
 				sendCmd("reset_scores")
 			elif event.key == pygame.K_m:
 				sendCmd("reset_matches")
+			elif event.key == pygame.K_SPACE:	
+				if Time.isAlive() == True:
+					print("You cannot Start a Thread that Already Started! Stop it First!")
+				else:			
+					Time.start() # Can only happen once, somehow need the thread to Stop so it can be started...... Queue maybe?
+
 	time.sleep(0.02) #delay 20ms to prevent CPU usage
 	"""
 	for line in sys.stdin:
