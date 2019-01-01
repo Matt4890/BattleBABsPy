@@ -48,31 +48,18 @@ class ServerThread(Thread):
 
 			# If a client requested for the scores to be reset...
 			elif cookedData == "RESET_SCORES":
-				print("Resetting team scores to 0...")
-				for team in TEAM_DICT:
-					TEAM_DICT[team].score = 0
-					TEAM_DICT[team].updateBalancedScore()
-				saveTeamData()
-				print("Done.")
+				resetScores()
 				continue
 
 			# If a client requested the matches to be reset...
 			elif cookedData == "RESET_MATCHES":
-				print("Generating a new match list...")
-				genNewMatches(list(TEAM_DICT.keys()))
-				print("Resetting team matches...")
-				for team in TEAM_DICT:
-					TEAM_DICT[team].matchesPlayed = 0
-					TEAM_DICT[team].matchesWon = 0
-					TEAM_DICT[team].updateBalancedScore()
-				print("Done.")
-				updateLeaderboard()
+				resetMatches()
 				continue
 
 			# If a client requested a full stat reset...
 			elif cookedData == "RESET":
-				SOCK.sendto("RESET_MATCHES".encode('ascii'), (UDP_IP, UDP_PORT))
-				SOCK.sendto("RESET_SCORES".encode('ascii'), (UDP_IP, UDP_PORT))
+				resetScores()
+				resetMatches()
 				continue
 
 			# If the message has the potential to be formatted as a scoring message...
@@ -142,6 +129,36 @@ class Team():
 ''''''# Functions
 ''''''#
 
+
+"""
+SUMMARY: Resets the scores of each team
+PARAMETERS: NONE
+RETURNS: VOID
+"""
+def resetScores():
+	print("Resetting team scores to 0...")
+	for team in TEAM_DICT:
+		TEAM_DICT[team].score = 0
+		TEAM_DICT[team].updateBalancedScore()
+	saveTeamData()
+	print("Done.")
+
+"""
+SUMMARY: Resets the matches played and won of each team, and generates a new match list
+PARAMATERS: NONE
+REUTNRS: VOID
+"""
+def resetMatches():
+	print("Generating a new match list...")
+	genNewMatches(list(TEAM_DICT.keys()))
+	print("Resetting team matches...")
+	for team in TEAM_DICT:
+		TEAM_DICT[team].matchesPlayed = 0
+		TEAM_DICT[team].matchesWon = 0
+		TEAM_DICT[team].updateBalancedScore()
+	print("Done.")
+	updateLeaderboard()
+
 """
 'NAME:SCORE:MATCHES_PLAYED:MATCHES_WON'
 """
@@ -191,7 +208,7 @@ Each line is formatted as: TEAM:SCORE.
 def saveTeamData():
 	dataLines = []
 	for team in TEAM_DICT:
-		dataLines.append(repr(TEAM_DICT[team]) + "\r\n")
+		dataLines.append(repr(TEAM_DICT[team]) + "\n")
 
 	fileHandle	= open(getDataFilePath() + "/teams.txt", "w")
 	fileHandle.writelines(dataLines)
@@ -210,7 +227,7 @@ def genNewMatches(teams):
 	matches = []
 	for i in range(0, len(teams) - 1):
 		for j in range(i + 1, len(teams)):
-			matches.append(teams[i] + ":" + teams[j] + "\r\n")
+			matches.append(teams[i] + ":" + teams[j] + "\n")
 	random.shuffle(matches)
 
 	fileHandle	= open(getDataFilePath() + "/matches.txt", "w")
@@ -312,7 +329,6 @@ UDP_IP		= "0.0.0.0"
 UDP_PORT	= 5005
 
 SOCK = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
 SOCK.bind((UDP_IP, UDP_PORT))
 
 ''''''#

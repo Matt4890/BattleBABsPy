@@ -45,7 +45,15 @@ def sendCmd(cmd):
 	# Recieve data back from the server if applicable
 	if cmd.strip().upper() in recievingCmds:
 		rawData, addr = SOCK.recvfrom(1024) # 1kiB buffer size
-		print(rawData.decode("ascii"))
+		strings = rawData.decode("ascii").strip().upper()
+		print("Received from server '%s'" % strings)
+		if strings.count(":") == 1:
+			teams = strings.split(":")
+			global NAME1 #not the neatest way to do this, will modify later, just need working system for testing
+			global NAME2
+			NAME1 = teams[0]
+			NAME2 = teams[1]
+			print("Name1: " + NAME1 + "\t Name2: " + NAME2)
 
 """
 Renders and blits a series of strings in the centre of a rect.
@@ -99,6 +107,7 @@ C_MINT	= ( 32, 255, 196)
 
 NAME1 = "123456789ABCDEF"
 NAME2 = "Team2GoesHere"
+
 # Rects
 R_SEP_C		    = (C_GRAY2,	pygame.Rect(xUnit * 2,  yUnit * 0,  xUnit * 1,  yUnit * 9 )) # Rectangle to Seperate Title and Stats
 R_SCOREBOARD_R	= (C_DGRAY,	pygame.Rect(xUnit * 3,  yUnit * 0,  xUnit * 13, yUnit * 1 )) # Rectangle for Match name
@@ -131,9 +140,20 @@ while True: #Main Loop
 		if event.type == pygame.QUIT: #Check for QUIT event
 			pygame.quit() #quit if so
 			quit()
+		elif event.type == pygame.KEYDOWN: ##ease of testing events while keeping the GUI from crashing
+			if event.key == pygame.K_n:
+				sendCmd("next_match")
+			elif event.key == pygame.K_r:
+				sendCmd("reset")
+			elif event.key == pygame.K_s:
+				sendCmd("reset_scores")
+			elif event.key == pygame.K_m:
+				sendCmd("reset_matches")
 	time.sleep(0.02) #delay 20ms to prevent CPU usage
+	"""
 	for line in sys.stdin:
 		for cmd in line.split('|'):
 			sendCmd(cmd)
+	"""
 
 
