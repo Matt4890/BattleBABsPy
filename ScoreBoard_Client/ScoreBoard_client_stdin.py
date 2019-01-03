@@ -4,6 +4,7 @@ It runs in a terminal, sending commands to the server that are input via stdin.
 Commands may be strung together in one line using the pipe '|' character.
 
 Author: Matthew Allwright
+Modified By: Not Matthew Allwright :P
 """
 
 ''''''#
@@ -14,7 +15,6 @@ import socket
 import sys
 import pygame
 import time
-from threading import Thread #threading for Timer functions
 
 
 ''''''#
@@ -30,28 +30,82 @@ SOCK.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1)
 # List of commands that should expect a message back from the server
 recievingCmds = ["NEXT_MATCH"]
 ''''''#
-''''''# Thread Classes
+''''''# Classes
 ''''''#
 
-class TimerThread(Thread):
-	def __init__(self):
-		Thread.__init__(self)
+class MatchFramework():
+	def __init__(self, team1 = "Team 1", team2 = "Team 2", startTime = 15):
+		self.team1 = team1.upper() # Uppercase in case we get lowercases
+		self.team2 = team2.upper() # Uppercase in case lowercases are received
+		self.score1 = 0
+		self.score2 = 0
+		self.timeL = startTime
 	
-	def run(self):
-		matchLength = 15 # match time in seconds, for ease of testing for now is set to 15 seconds
-		global timeRemain
-		for timer in range(matchLength, 0, -1):
-			timeRemain = timer
-			print("TimerTick!", timer)
-			time.sleep(1) #delay 1 second
-		# We are done counting down, send results to Leaderboard
-		timeRemain = 0
-		global NAME1
-		global NAME2
-		global SCORE1
-		global SCORE2 # This is really not a neat way to do this, get someone to look at this, maybe a CompSci student idk, it would be a good task for them :P
-		sendCmd(NAME1 + ":" + str(SCORE1) + "," + NAME2 + ":" + str(SCORE2))
-		return True
+	def __repr__(self):
+		return "%s:%i:%s:%i:%i" % (
+			self.team1, 
+			self.score1, 
+			self.team2, 
+			self.score2, 
+			self.timeL
+		)
+	
+	def insertTeamNames(self, team1Name, team2Name):
+		self.team1 = team1Name
+		self.team2 = team2Name
+		print("Set team 1 name to [%s] and team 2 name to [%s]" % (self.team1, self.team2))
+	
+	def changeTeam1Score(self, delta):
+		self.score1 += delta
+		print("Team 1's score had delta %i, score is now %i" % (delta, self.score1))
+	
+	def changeTeam2Score(self, delta):
+		self.score2 += delta
+		print("Team 2's score had delta %i, score is now %i" % (delta, self.score2))
+	
+	def setMatchLength(self, length):
+		self.timeL = length
+	
+	def getMatchLength(self):
+		return self.timeL
+	
+	def getScores(self):
+		return self.score1, self.score2
+	
+
+class TimerSystem():
+	def __init__(self):
+		self.start = False
+		self.pulser = False
+		self.timeRem = 0
+		self.matchLength = 20
+	
+	def setMatchTime(self, setTime):
+		self.matchLength = setTime
+	
+	def setTimeRemain(self, timeRemain):
+		self.timeRem = timeRemain
+
+	def decrementTime(self):
+		self.timeRem -= 1
+	
+	def getRemainingTime(self):
+		return self.timeRem
+	
+	def setState(self, state):
+		self.start = state
+		print("State is " + str(self.start))
+		if self.start == True:
+			self.timeRem = self.matchLength
+	
+	def getState(self):
+		return self.start
+	
+	def getPulser(self):
+		return self.pulser
+	
+	def setPulser(self, state):
+		self.pulser = state
 
 ''''''#
 ''''''# Functions
@@ -74,11 +128,7 @@ def sendCmd(cmd):
 		print("Received from server '%s'" % strings)
 		if strings.count(":") == 1:
 			teams = strings.split(":")
-			global NAME1 #not the neatest way to do this, will modify later, just need working system for testing
-			global NAME2
-			NAME1 = teams[0]
-			NAME2 = teams[1]
-			print("Name1: " + NAME1 + "\t Name2: " + NAME2)
+			return teams
 
 """
 Renders and blits a series of strings in the centre of a rect.
@@ -106,7 +156,7 @@ def blitInRect(rect, font, colour, *strings, startingY=-1, gapY=0):
 ''''''# Client Loop
 ''''''#
 
-pygame.init() #Initialize PyGame
+pygame.init() #Initialize PyGame So we can make a GUI
 
 # Window Parameters
 WINDOW_WIDTH	= 1920
@@ -130,12 +180,6 @@ C_GRAY2	= ( 60,  80,  96)
 C_CYAN	= ( 32, 196, 220)
 C_MINT	= ( 32, 255, 196)
 
-NAME1 = "123456789ABCDEF"
-NAME2 = "Team2GoesHere"
-#Temp Placeholder scores
-SCORE1 = 10
-SCORE2 = 20
-timeRemain = 999
 
 # Rects
 R_SEP_C		    = (C_GRAY2,	pygame.Rect(xUnit * 2,  yUnit * 0,  xUnit * 1,  yUnit * 9 )) # Rectangle to Seperate Title and Stats
@@ -149,10 +193,30 @@ R_TEAM2_R       = (C_LGRAY, pygame.Rect(xUnit * 11,	yUnit * 3, 	xUnit * 4,	yUnit
 R_SCORE1_R      = (C_LGRAY, pygame.Rect(xUnit * 4,	yUnit * 4, 	xUnit * 4,	yUnit * 1 )) # Rectangle for Team 1's Score
 R_SCORE2_R      = (C_LGRAY, pygame.Rect(xUnit * 11, yUnit * 4, 	xUnit * 4,	yUnit * 1 )) # Rectangle for Team 2's Score
 
-Time = TimerThread()
+# Scorekeeping and Countdown System
+Time = TimerSystem() #Main Timer System
 Time.daemon = True # Will kill on main thread exit
+#Time.run() #bad thing happen with this uncommented
+ScoreSystem = MatchFramework("TeamName1", "TeamName2", 20) # Create Scoring System from a MatchFramework
+teams = ["Null", "Null"] #Teams List: Holder of the Team Names
+scores = ["Null", "Null"] #Scores List: Holder of the Scores
+startTime = time.time()
+
+Time.setMatchTime(ScoreSystem.getMatchLength()) #match time set
 
 while True: #Main Loop
+	matchState = Time.getState()
+	if matchState == True:
+		enlapsed = time.time() - startTime
+		if enlapsed >= 1:
+			if Time.getRemainingTime() > 1:
+				startTime = time.time()
+				print("1 second Ping at: " + str(enlapsed))
+				Time.decrementTime()
+			else:
+				Time.setTimeRemain(0)
+				Time.setState(False)
+				Time.setPulser(True)
 	DISPLAY_SURFACE.fill(C_DGRAY) # "Clear" the Screen
 	pygame.draw.rect(DISPLAY_SURFACE, *R_SEP_C)
 	pygame.draw.rect(DISPLAY_SURFACE, *R_CONTROL_C)
@@ -164,34 +228,47 @@ while True: #Main Loop
 	pygame.draw.rect(DISPLAY_SURFACE, *R_SCORE2_R)
 	
 
-	blitInRect(R_TIMETITLE_R[1], MEDIUM_FONT, C_MINT, "Match Time Remaining:", str(timeRemain) + " Seconds") # The "999" is just there as a placeholder for a timer variable
+	blitInRect(R_TIMETITLE_R[1], MEDIUM_FONT, C_MINT, "Match Time Remaining:", str(Time.getRemainingTime()) + " Seconds") # The "999" is just there as a placeholder for a timer variable
 	blitInRect(R_TITLE_C[1], LARGE_FONT, C_MINT, "Battle", "BABs", time.strftime("%Y"))
-	blitInRect(R_SCOREBOARD_R[1], MEDIUM_FONT, C_MINT, "Match: [" + NAME1 + "] VS [" + NAME2 + "]")
-	blitInRect(R_TEAM1_R[1], MEDIUM_FONT, C_MINT, NAME1)
-	blitInRect(R_TEAM2_R[1], MEDIUM_FONT, C_MINT, NAME2)
-	blitInRect(R_SCORE1_R[1], MEDIUM_FONT, C_MINT, str(SCORE1))
-	blitInRect(R_SCORE2_R[1], MEDIUM_FONT, C_MINT, str(SCORE2))
-
+	blitInRect(R_SCOREBOARD_R[1], MEDIUM_FONT, C_MINT, "Match: [" + teams[0] + "] VS [" + teams[1] + "]")
+	blitInRect(R_TEAM1_R[1], MEDIUM_FONT, C_MINT, teams[0])
+	blitInRect(R_TEAM2_R[1], MEDIUM_FONT, C_MINT, teams[1])
+	scores = ScoreSystem.getScores()
+	blitInRect(R_SCORE1_R[1], MEDIUM_FONT, C_MINT, str(scores[0]))
+	blitInRect(R_SCORE2_R[1], MEDIUM_FONT, C_MINT, str(scores[1]))
+	
 	pygame.display.update() #Update display
-
+	if Time.getPulser() == True and Time.getState() == False:
+		sendCmd(teams[0] + ":" + str(scores[0]) + "," + teams[1] + ":" + str(scores[1]))
+		Time.setPulser(False)
+	
 	for event in pygame.event.get(): #Event handling to take care of "Hanging" issues with OS
 		if event.type == pygame.QUIT: #Check for QUIT event
 			pygame.quit() #quit if so
 			quit()
 		elif event.type == pygame.KEYDOWN: ## Ease of testing events while keeping the GUI from crashing
 			if event.key == pygame.K_n:
-				sendCmd("next_match")
+				teams = sendCmd("next_match")
+				ScoreSystem.insertTeamNames(teams[0], teams[1])
 			elif event.key == pygame.K_r:
 				sendCmd("reset")
 			elif event.key == pygame.K_s:
 				sendCmd("reset_scores")
 			elif event.key == pygame.K_m:
 				sendCmd("reset_matches")
-			elif event.key == pygame.K_SPACE:	
-				if Time.isAlive() == True:
-					print("You cannot Start a Thread that Already Started! Stop it First!")
-				else:			
-					Time.start() # Can only happen once, somehow need the thread to Stop so it can be started...... Queue maybe?
+			elif event.key == pygame.K_f: #Debug force send match completion
+				sendCmd(teams[0] + ":" + str(scores[0]) + "," + teams[1] + ":" + str(scores[1]))
+			elif event.key == pygame.K_PERIOD:
+				if matchState == True:
+					ScoreSystem.changeTeam2Score(1) #Debug add 1 to score 2
+			elif event.key == pygame.K_COMMA:
+				if matchState == True:
+					ScoreSystem.changeTeam1Score(1) #Debug add 1 to score 1
+			elif event.key == pygame.K_SPACE:
+				Time.setState(True)
+				startTime = time.time()
+			elif event.key == pygame.K_b:
+				Time.setState(False) # debug match stop
 
 	time.sleep(0.02) #delay 20ms to prevent CPU usage
 	"""

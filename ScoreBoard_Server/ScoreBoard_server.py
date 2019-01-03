@@ -42,7 +42,9 @@ class ServerThread(Thread):
 			if cookedData == "NEXT_MATCH":
 				print("Sending next match data to:", client)
 				match	= getNextMatch()
+				names = match.split(":")
 				SOCK.sendto(match.encode("ascii"), client)
+				setMatchQueued(names)
 				print("Done.")
 				continue
 
@@ -254,9 +256,11 @@ def getNextMatch():
 	for line in getMatchList():
 		if line[0] != "~":
 			match = line.strip()
-			break
+			if match.find(">") == -1:
+				break
 	match = "NONE" if match == "" else match
 
+	
 	return match
 
 """
@@ -277,8 +281,28 @@ def setMatchCompleted(match):
 	matchStr_0 = match[0] + ":" + match[1]
 	matchStr_1 = match[1] + ":" + match[0]
 	for i in range(len(dataLines)):
-		if dataLines[i].strip() == matchStr_0 or dataLines[i].strip() == matchStr_1:
-			dataLines[i] = "~" + dataLines[i]
+		if dataLines[i].strip().strip('>') == matchStr_0 or dataLines[i].strip() == matchStr_1:
+			dataLines.pop(i)
+			break
+
+	fileHandle	= open(getDataFilePath() + "/matches.txt", "w")
+	fileHandle.writelines(dataLines)
+	fileHandle.close()
+
+def setMatchQueued(match):
+	# Gotcha now, ya damn bug.
+	if len(match) != 2 or not all(team in TEAM_DICT for team in match):
+		return
+
+	fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
+	dataLines	= fileHandle.readlines()
+	fileHandle.close()
+
+	matchStr_0 = match[0] + ":" + match[1]
+	matchStr_1 = match[1] + ":" + match[0]
+	for i in range(len(dataLines)):
+		if dataLines[i].strip().strip('>') == matchStr_0 or dataLines[i].strip() == matchStr_1:
+			dataLines[i] = ">" + dataLines[i]
 			break
 
 	fileHandle	= open(getDataFilePath() + "/matches.txt", "w")
