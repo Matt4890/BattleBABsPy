@@ -11,21 +11,25 @@ Modified By: Not Matthew Allwright :P
 ''''''# Imports
 ''''''#
 
+import os
 import socket
+import serial
+import serial.tools.list_ports
 import sys
 import pygame
 import time
-
+import warnings
+import threading
 
 ''''''#
 ''''''# Networking
 ''''''#
 
 UDP_IP = "255.255.255.255" #IP is UDP Broadcast
-UDP_PORT = 5005
+UDP_PORT = 5005 # use a port we *think* nothing is using...hopefully
 
-SOCK = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-SOCK.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1)
+SOCK = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # create a socket configured for UDP Datagram communication
+SOCK.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1) # setup the socket to use UDP broadcast
 
 # List of commands that should expect a message back from the server
 recievingCmds = ["NEXT_MATCH"]
@@ -62,6 +66,12 @@ class MatchFramework():
 	def changeTeam2Score(self, delta):
 		self.score2 += delta
 		print("Team 2's score had delta %i, score is now %i" % (delta, self.score2))
+	
+	def getTeam1Score(self):
+		return self.score1
+	
+	def getTeam2Score(self):
+		return self.score2
 	
 	def setMatchLength(self, length):
 		self.timeL = length
@@ -152,9 +162,116 @@ def blitInRect(rect, font, colour, *strings, startingY=-1, gapY=0):
 		DISPLAY_SURFACE.blit(element, elementRect)
 		midY += gapY + elementRect.height
 
+def handleScoreModification(team, method):
+	scoreMethod = None
+	found = False
+	methods = readScoreMethods() # get Score methods from methods.txt
+	for index in range (0,len(methods)):
+		scoreMethod = methods[index]
+		if method == scoreMethod[0]:
+			found = True
+			print("Method found, breaking for loop.")
+			break
+	if found == True:
+		if Time.getState() == True:
+			if team == 1:
+				changeTeam1Score(scoreMethod[1])
+			else:
+				changeTeam2Score(scoreMethod[1])
+		else:
+			print("Cant add score, match not running")
+	else:
+		print("Score method wasnt found, ignoring...")
+
+def getDataFilePath():
+	scriptDir = os.path.dirname("__file__")
+	dataFolder = "data"
+	path = os.path.join(scriptDir, dataFolder)
+	return path
+
+def readScoreMethods():
+	fileHandle = open(getDataFilePath() + "/methods.txt", "r")
+	dataLines = fileHandle.readlines()
+	fileHandle.close()
+	index = 0
+	for line in dataLines:
+		cooked = line.strip().upper()
+		scoreMethod = constructScoreMethod(cooked)
+		methodDict[index] = scoreMethod
+		index += 1
+	return methodDict
+
+def readMethodNames():
+	fileHandle = open(getDataFilePath() + "/methods.txt", "r")
+	dataLines = fileHandle.readlines()
+	fileHandle.close()
+	index = 0
+	for line in dataLines:
+		cooked = line.strip().upper()
+		cookedPan = cooked.split(":")
+		methods[index] = cookedPan[0]
+	return methods
+
+def constructScoreMethod(string): #AKA split the string, parse integer
+	raw = string.split(":")
+	cooked = []
+	cooked[0] = raw[0] # Method name is index 0
+	try:
+		cooked[1] = int(raw[1]) #cooked 1 is integer of point value
+	except Exception as e:
+		raise ValueError("Cannot Format"):
+			print("OwO wat dis?")
+		raise e:
+			print("Weird stuff happened")
+	return cooked
+
+def handleSerialRead(data):
+	strippedData = data.strip().upper()
+	print("Stripped Data: %s   |   Raw: %s" % (strippedData, data))
+	print("Receive complete, handling...")
+	methods = readMethodNames()
+
+	if data == "s": #Start match COM data
+		print("Start match event received. starting a match.")
+		startTime = time.time() # setup the start time for the timer
+		Time.setState(True) # Start the timer	
+		ScoreSystem.changeTeam1Score(-ScoreSystem.getTeam1Score())#reset scores
+		scoreSystem.changeTeam2Score(-ScoreSystem.getTeam2Score())#reset scores
+	elif data == str(method + "1"):
+		print("Score Method 1 found for Team 1")
+		handleScoreModification(1, methods[0])
+	elif data == str(methods[0] + "2"):
+		print("Score method 1 found for team 2")
+		handleScoreModification(2, methods[0])
+	elif data == str(methods[1] + "1"):
+		print("Score method 2 for team 1 found")
+		handleScoreModification(1, methods[1]) #PAUSED HERE
+	print("Handle complete.")	
+
+def readSerialConnection(ser):
+	while True:
+		print(">Awaiting...")
+		reading = ser.readline().decode()
+		handleSerialRead(reading)
+
 ''''''#
-''''''# Client Loop
+''''''# Client Loop and main code
 ''''''#
+print("Listing COM ports:")
+for port in serial.tools.list_ports.comports():
+	print(port)
+	time.sleep(0.1)
+print("COM ports listed. Attempting to find an Arduino...")
+arduinoPorts = [ port.device for port in serial.tools.list_ports.comports() ] # if "Arduino" in port.description
+if not arduinoPorts:
+	raise IOError("No Arduino Found!")
+if len(arduinoPorts) > 1:
+	warnings.warn("Multiple Arduinos were found - using first option")
+print("Connecting to Arduino...")
+ser = serial.Serial(arduinoPorts[0]) #establish connection to COM port
+serialThread = threading.Thread(target=readSerialConnection, args=(ser,)) #make a thread to handle receiving without breaking
+serialThread.daemon = True # make it exit on close
+serialThread.start() # start the read thread
 
 pygame.init() #Initialize PyGame So we can make a GUI
 

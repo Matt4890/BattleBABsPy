@@ -1,0 +1,4 @@
+RubberBand:20
+Shove:30
+PingPong:40
+Disable:60

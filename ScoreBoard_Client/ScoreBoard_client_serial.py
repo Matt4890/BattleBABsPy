@@ -17,11 +17,7 @@ import warnings
 ''''''# Networking
 ''''''#
 
-UDP_IP = "127.0.0.1"
-UDP_PORT = 5005
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-SOCK.bind((UDP_IP, UDP_PORT))
 
 ''''''#
 ''''''# Serial
@@ -46,13 +42,4 @@ ser = serial.Serial(arduinoPorts[0])
 ''''''#
 
 while True:
-	if '1' in ser.readline().decode("ascii"):
-		sock.sendto(b'1:1', (UDP_IP, UDP_PORT))
-	#sock.sendto(ser.readline(), (UDP_IP, UDP_PORT))
-
-for line in sys.stdin:
-	if ',' in line:
-		for msg in line.split(','):
-			sock.sendto(msg.encode('ascii'), (UDP_IP, UDP_PORT))
-	else:
-		sock.sendto(line.encode('ascii'), (UDP_IP, UDP_PORT))
+	time.sleep(1)
