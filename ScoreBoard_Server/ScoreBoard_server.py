@@ -253,19 +253,23 @@ Returns : A string of the teams in the next match formatted as TEAM1:TEAM2.
 """
 def getNextMatch():
 	match = ""
-	for line in getMatchList():
-		if line[0] != "~":
-			match = line.strip()
-			if match.find(">") == -1:
-				break
-	match = "NONE" if match == "" else match
-
-	
-	return match
+	matchList = getMatchList()
+	if len(matchList) == 0:
+		print("Matchlist is empty! Client will crash if empty match given, returning a Null match")
+		match = "NULL:NULL"
+		return match
+	else:
+		for line in getMatchList():
+			if line[0] != "~":
+				match = line.strip()
+				if match.find(">") == -1:
+					break
+		match = "NONE" if match == "" else match
+		return match
 
 """
 Sets a match in the 'matches.txt' file to 'completed' status.
-A completed match is noted by a '~' as the first character of the line.
+AKA it deletes it
 
 match : A list of teams in the completed match.
 """
@@ -373,9 +377,9 @@ pygame.init()
 # Window Parameters
 WINDOW_WIDTH	= 1920
 WINDOW_HEIGHT	= 1080
-xUnit			= WINDOW_WIDTH // 16
-yUnit			= WINDOW_HEIGHT // 9
-DISPLAY_SURFACE	= pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))#, pygame.FULLSCREEN)# <-- Use for fullscreen
+xUnit			= WINDOW_WIDTH // 16 #Grid system X axis snaps
+yUnit			= WINDOW_HEIGHT // 9 #Grid system Y axis snaps
+DISPLAY_SURFACE	= pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))#, pygame.FULLSCREEN)# <-- uncomment for fullscreen application
 pygame.display.set_caption("Battle BABs - Server")
 
 # Fonts
@@ -383,7 +387,7 @@ LARGE_FONT	= pygame.font.SysFont("monospace", 52, True)
 MEDIUM_FONT	= pygame.font.SysFont("monospace", 36, True)
 SMALL_FONT	= pygame.font.SysFont("monospace", 24, True)
 
-# Colours
+# Colours   R    G    B
 C_LGRAY	= ( 72,  96, 112)
 C_MGRAY	= ( 48,  64,  80)
 C_DGRAY	= ( 28,  36,  44)
@@ -394,29 +398,20 @@ C_MINT	= ( 32, 255, 196)
 
 # Rects
 R_TITLE_C		= (C_DGRAY,	pygame.Rect(xUnit * 0,  yUnit * 0,  xUnit * 2,  yUnit * 5 ))
-
 R_CONTROL_C		= (C_CYAN,	pygame.Rect(xUnit * 0,  yUnit * 5,  xUnit * 2,  yUnit * 4 ))
-
 R_LEADERBOARD_R	= (C_DGRAY,	pygame.Rect(xUnit * 2,  yUnit * 0,  xUnit * 10, yUnit * 1 ))
-
 R_RANK_R		= (C_MGRAY,	pygame.Rect(xUnit * 2,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
 R_RANK_C		= (C_GRAY1,	pygame.Rect(xUnit * 2,  yUnit * 2,  xUnit * 1,  yUnit * 7 ))
-
 R_NAME_R		= (C_MGRAY,	pygame.Rect(xUnit * 3,  yUnit * 1,  xUnit * 3,  yUnit * 1 ))
 R_NAME_C		= (C_GRAY2,	pygame.Rect(xUnit * 3,  yUnit * 2,  xUnit * 3,  yUnit * 7 ))
-
 R_SCORE_R		= (C_MGRAY,	pygame.Rect(xUnit * 6,  yUnit * 1,  xUnit * 2,  yUnit * 1 ))
 R_SCORE_C		= (C_GRAY1,	pygame.Rect(xUnit * 6,  yUnit * 2,  xUnit * 2,  yUnit * 7 ))
-
 R_MPLAYED_R		= (C_MGRAY,	pygame.Rect(xUnit * 8,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
 R_MPLAYED_C		= (C_GRAY2,	pygame.Rect(xUnit * 8,  yUnit * 2,  xUnit * 1,  yUnit * 7 ))
-
 R_MWON_R		= (C_MGRAY,	pygame.Rect(xUnit * 9,  yUnit * 1,  xUnit * 1,  yUnit * 1 ))
 R_MWON_C		= (C_GRAY1,	pygame.Rect(xUnit * 9,  yUnit * 2,  xUnit * 1,  yUnit * 7 ))
-
 R_BSCORE_R		= (C_MGRAY,	pygame.Rect(xUnit * 10, yUnit * 1,  xUnit * 2,  yUnit * 1 ))
 R_BSCORE_C		= (C_GRAY2,	pygame.Rect(xUnit * 10, yUnit * 2,  xUnit * 2,  yUnit * 7 ))
-
 R_MATCHES_R		= (C_DGRAY,	pygame.Rect(xUnit * 12, yUnit * 0,  xUnit * 4,  yUnit * 1 ))
 R_MATCHES_C		= (C_LGRAY,	pygame.Rect(xUnit * 12, yUnit * 1,  xUnit * 4,  yUnit * 8 ))
 
