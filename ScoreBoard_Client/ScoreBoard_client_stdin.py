@@ -38,7 +38,7 @@ recievingCmds = ["NEXT_MATCH"]
 ''''''#
 
 class MatchFramework():
-	def __init__(self, team1 = "Team 1", team2 = "Team 2", startTime = 15):
+	def __init__(self, team1 = "Team 1", team2 = "Team 2", startTime = 20):
 		self.team1 = team1.upper() # Uppercase in case we get lowercases
 		self.team2 = team2.upper() # Uppercase in case lowercases are received
 		self.score1 = 0
@@ -116,6 +116,7 @@ class TimerSystem():
 		#else:
 		#	pygame.mixer.music.stop()
 		#	pygame.mixer.music.rewind()
+			buzzerSound.play()
 	
 	def getState(self):
 		return self.start
@@ -223,8 +224,10 @@ def handleSerialRead(data):
 		print("[COM] Start match event received. starting a match.")
 		startTime = time.time() # setup the start time for the timer
 		Time.setState(True) # Start the timer	
-		ScoreSystem.changeTeam1Score(-ScoreSystem.getTeam1Score())#reset scores
-		ScoreSystem.changeTeam2Score(-ScoreSystem.getTeam2Score())#reset scores
+		updateMethod(0," ") # reset latest scoring method for team 1
+		updateMethod(1," ") # reset latest scoring method for team 2
+		ScoreSystem.changeTeam1Score(-ScoreSystem.getTeam1Score())#reset score for team 1
+		ScoreSystem.changeTeam2Score(-ScoreSystem.getTeam2Score())#reset score for team 2
 	elif strippedData == "E": #Stop match COM data
 		print("[COM] Stopping match")
 		Time.setState(False)
@@ -236,11 +239,13 @@ def handleSerialRead(data):
 		print("[COM] Data was not a start match condition, checking scoring methods...")
 		methods = readMethodNames()
 		methodDict = readScoreMethods()
+		i = 0
 		for method in methods:
 			if strippedData == str(method + "1"):
 				print("[COM] Method \"%s\" has matched to team 1." % (strippedData))
 				if Time.getState() == True:
 					ScoreSystem.changeTeam1Score(methodDict[method])
+					updateMethod(0,methods[i])
 				else:
 					print("Cant add score, match not going")
 				break
@@ -248,11 +253,13 @@ def handleSerialRead(data):
 				print("[COM] Method \"%s\" has matched to team 2." % (strippedData))
 				if Time.getState() == True:
 					ScoreSystem.changeTeam2Score(methodDict[method])
+					updateMethod(1,methods[i])
 				else:
 					print("Cant add score, match not going")
 				break
 			else:
 				print("[COM] Method \"%s\" not matched yet." % (strippedData))
+			i += 1
 	print("[COM] Handle complete.")	
 
 def readSerialConnection(ser):
@@ -260,6 +267,9 @@ def readSerialConnection(ser):
 		print("[COM] Awaiting...")
 		reading = ser.readline().decode()
 		handleSerialRead(reading)
+		
+def updateMethod(index, methodIn):
+	method[index] = methodIn
 
 ''''''#
 ''''''# Client Loop and main code begins here
@@ -285,7 +295,7 @@ serialThread.start() # start the read thread
 pygame.init() #Initialize PyGame So we can make a GUI
 
 #Music and Sound Effects
-# buzzerSound = pygame.mixer.Sound(getDataFilePath() + "/buzzer.wav") # load buzzer sound
+buzzerSound = pygame.mixer.Sound(getDataFilePath() + "/buzzer.wav") # load buzzer sound
 # pygame.mixer.music.load(getDataFilePath() + "/music.wav") # load background music
 # pygame.mixer.music.stop() # make sure it doesnt start playing
 
@@ -322,12 +332,17 @@ R_TEAM1_R       = (C_LGRAY, pygame.Rect(xUnit * 4, 	yUnit * 3, 	xUnit * 4,	yUnit
 R_TEAM2_R       = (C_LGRAY, pygame.Rect(xUnit * 11,	yUnit * 3, 	xUnit * 4,	yUnit * 1 )) # Rectangle for Team 2's Name
 R_SCORE1_R      = (C_LGRAY, pygame.Rect(xUnit * 4,	yUnit * 4, 	xUnit * 4,	yUnit * 1 )) # Rectangle for Team 1's Score
 R_SCORE2_R      = (C_LGRAY, pygame.Rect(xUnit * 11, yUnit * 4, 	xUnit * 4,	yUnit * 1 )) # Rectangle for Team 2's Score
+R_METHOD1_R     = (C_LGRAY, pygame.Rect(xUnit * 4, yUnit * 5, 	xUnit * 4,	yUnit * 1 )) # rectangle for Team 1's scoring method
+R_METHOD2_R     = (C_LGRAY, pygame.Rect(xUnit * 11,	yUnit * 5, 	xUnit * 4,	yUnit * 1 )) # Rectangle for Team 2's scoring method
 
 # Scorekeeping and Countdown System
+__MatchLength = 120 # Change this variable's value to adjust the length of a match in seconds. Must be an integer!
+
 Time = TimerSystem() #Main Timer System
-ScoreSystem = MatchFramework("", "", 20) # Create Scoring System from a MatchFramework
+ScoreSystem = MatchFramework("", "", __MatchLength) # Create Scoring System from a MatchFramework
 teams = ["Null", "Null"] #Teams List: Holder of the Team Names
-scores = ["Null", "Null"] #Scores List: Holder of the Scores
+scores = ["0", "0"] #Scores List: Holder of the Scores
+method = ["Null", "Null"] #Method List: Holder of the Latest Scoring method
 startTime = time.time()
 
 Time.setMatchTime(ScoreSystem.getMatchLength()) #match time set
@@ -358,6 +373,8 @@ while True: #Main Loop
 	pygame.draw.rect(DISPLAY_SURFACE, *R_TEAM2_R)
 	pygame.draw.rect(DISPLAY_SURFACE, *R_SCORE1_R)
 	pygame.draw.rect(DISPLAY_SURFACE, *R_SCORE2_R)
+	pygame.draw.rect(DISPLAY_SURFACE, *R_METHOD1_R)
+	pygame.draw.rect(DISPLAY_SURFACE, *R_METHOD2_R)
 	
 
 	blitInRect(R_TIMETITLE_R[1], MEDIUM_FONT, C_MINT, "Match Time Remaining:", str(Time.getRemainingTime()) + " Seconds") # The "999" is just there as a placeholder for a timer variable
@@ -368,6 +385,8 @@ while True: #Main Loop
 	scores = ScoreSystem.getScores()
 	blitInRect(R_SCORE1_R[1], MEDIUM_FONT, C_MINT, str(scores[0]))
 	blitInRect(R_SCORE2_R[1], MEDIUM_FONT, C_MINT, str(scores[1]))
+	blitInRect(R_METHOD1_R[1], MEDIUM_FONT, C_MINT, method[0])
+	blitInRect(R_METHOD2_R[1], MEDIUM_FONT, C_MINT, method[1])
 	
 	pygame.display.update() #Update display
 	if Time.getPulser() == True and Time.getState() == False:
