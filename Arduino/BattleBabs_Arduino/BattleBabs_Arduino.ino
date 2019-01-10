@@ -48,7 +48,7 @@ void loop() {
       if(digitalRead(specialButtons[i]) == false) {
         digitalWrite(statusLED,HIGH);
         Serial.println(specialEvents[i]);
-        delay(100);
+        delay(350);
         digitalWrite(statusLED,LOW);
       }
     }
@@ -61,7 +61,7 @@ void loop() {
       if(digitalRead(team1Buttons[i]) == false) { // state verification after debounce
         digitalWrite(statusLED,HIGH);
         Serial.println( (methods[i] + "1") );
-        delay(100);
+        delay(350);
         digitalWrite(statusLED,LOW);
       }
     }
