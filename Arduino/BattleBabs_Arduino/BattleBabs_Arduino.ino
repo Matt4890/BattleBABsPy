@@ -29,8 +29,25 @@ void setup() {
 
 void loop() {
   for(int i = 0; i < NUM_OF_METHODS; i++) {
+    //Check Team 1 Buttons
     if(digitalRead(team1Buttons[i]) == false) {
-      Serial.println( (methods[i] + "1") );
+      delay(50);
+      if(digitalRead(team1Buttons[i]) == false){
+        digitalWrite(statusLED, HIGH);
+        Serial.println( (methods[i] + "1") );
+        delay(350);
+        digitalWrite(statusLED, LOW);
+      }
+    }
+    //Check Team 2 Buttons
+    if(digitalRead(team2Buttons[i]) == false) {
+      delay(50);
+      if(digitalRead(team2Buttons[i]) == false){
+        digitalWrite(statusLED, HIGH);
+        Serial.println( (methods[i] + "2") );
+        delay(350);
+        digitalWrite(statusLED, LOW);
+      }
     }
   }
 

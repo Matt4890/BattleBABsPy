@@ -239,11 +239,17 @@ def handleSerialRead(data):
 		for method in methods:
 			if strippedData == str(method + "1"):
 				print("[COM] Method \"%s\" has matched to team 1." % (strippedData))
-				ScoreSystem.changeTeam1Score(methodDict[method])
+				if(TimerSystem.getState() == True):
+					ScoreSystem.changeTeam1Score(methodDict[method])
+				else:
+					print("State is False, cant add score")
 				break
 			elif strippedData == str(method + "2"):
 				print("[COM] Method \"%s\" has matched to team 2." % (strippedData))
-				ScoreSystem.changeTeam2Score(methodDict[method])
+				if(TimerSystem.getState() == True):
+					ScoreSystem.changeTeam2Score(methodDict[method])
+				else:
+					print("State is False, cant add score")
 				break
 			else:
 				print("[COM] Method \"%s\" not matched yet." % (strippedData))
