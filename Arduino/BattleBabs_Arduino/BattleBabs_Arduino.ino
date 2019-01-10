@@ -1,5 +1,3 @@
-//#include <Utility.h> // Utility library is required. If you do not have it, it can be downloaded from http://playground.arduino.cc/Code/Utility
-
 /*
  * These arrays specify the digital pin each button is connected to, and the method/event to send if that
  * button is pushed. The number of methods must match the number of buttons for each category, so if

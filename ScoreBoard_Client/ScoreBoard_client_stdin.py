@@ -239,14 +239,14 @@ def handleSerialRead(data):
 		for method in methods:
 			if strippedData == str(method + "1"):
 				print("[COM] Method \"%s\" has matched to team 1." % (strippedData))
-				if TimerSystem.getState() == True:
+				if Time.getState() == True:
 					ScoreSystem.changeTeam1Score(methodDict[method])
 				else:
 					print("Cant add score, match not going")
 				break
 			elif strippedData == str(method + "2"):
 				print("[COM] Method \"%s\" has matched to team 2." % (strippedData))
-				if TimerSystem.getState() == True:
+				if Time.getState() == True:
 					ScoreSystem.changeTeam2Score(methodDict[method])
 				else:
 					print("Cant add score, match not going")
@@ -335,6 +335,7 @@ Time.setMatchTime(ScoreSystem.getMatchLength()) #match time set
 while True: #Main Loop
 	teams = ScoreSystem.getTeams()
 	matchState = Time.getState()
+	# Match Timer Countdown handling
 	if matchState == True:
 		enlapsed = time.time() - startTime
 		if enlapsed >= 1:
@@ -346,6 +347,8 @@ while True: #Main Loop
 				Time.setTimeRemain(0)
 				Time.setState(False)
 				Time.setPulser(True)
+	# Match time stuff complete
+
 	DISPLAY_SURFACE.fill(C_DGRAY) # "Clear" the Screen
 	pygame.draw.rect(DISPLAY_SURFACE, *R_SEP_C)
 	pygame.draw.rect(DISPLAY_SURFACE, *R_CONTROL_C)
