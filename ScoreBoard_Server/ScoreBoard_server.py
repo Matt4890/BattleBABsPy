@@ -7,6 +7,8 @@ Desc.
 ''''''#
 
 import os
+from os import listdir
+from os.path import isfile, join
 import pygame
 import random
 import socket
@@ -153,6 +155,81 @@ class MatchSystem():
 	def getQueued(self):
 		return self.queued
 
+class MusicSystem():
+	def __init__(self):
+		self.canUtilize = False
+		self.volume = 100
+		self.queue = []
+		self.playing = -1
+
+	def __repr__(self):
+		print("foo")
+
+	def loadSongs(self):
+		filePath = getMusicFilePath()
+		onlyFiles = [f for f in listdir(filePath) if isfile(join(filePath, f))] # get only files in the music directory
+		if len(onlyFiles) == 0:
+			print("No music in directory! pygame music mixer wont be utilized")
+			self.canUtilize = False
+		else:
+			print("Files were found. pygame music mixer will be utilized")
+			self.canUtilize = True
+			pygame.mixer.init(frequency=44100) # ensure music sample is 44100Hz for nice playback
+			return onlyFiles
+
+	def createQueue(self, fileList):
+		if self.canUtilize == True:
+			print("Creating a music Queue")
+			self.queue = fileList
+			print("Randomizing queue")
+			random.shuffle(self.queue)
+			SONG_END = pygame.USEREVENT + 1
+			pygame.mixer.music.set_endevent(SONG_END) # setup an event
+		else:
+			print("Cant be executed! mixer isnt enabled because no files found in music directory")
+	
+	def getCurrentSongIndex(self):
+		return self.playing
+	
+	def getQueueLength(self):
+		return len(self.queue)
+	
+	def getQueue(self):
+		return self.queue
+	
+	def playNextSongByIndex(self, index):
+		if self.canUtilize == True:
+			print("selecting song from index %i" % (index))
+			print("Selected is :" + self.queue[index])
+			pygame.mixer.music.load(getMusicFilePath() + "/" + self.queue[index])
+			pygame.mixer.music.play(1)
+			self.playing = index
+		else:
+			print("Cant play a song, mixer music isnt utilized")
+	
+	def playNextSongByName(self, name):
+		if self.canUtilize == True:
+			pygame.mixer.music.stop()
+			pygame.mixer.music.load(getMusicFilePath() + "/" + name)
+			pygame.mixer.music.play(1)
+			self.playing = queue.index(name)
+		else:
+			print("Cant play a song, mixer music isnt utilized")
+	
+	def volumeDown(self):
+		if (self.volume - 10) < 0:
+			self.volume = 0
+		else:
+			self.volume -= 10
+		pygame.mixer.music.set_volume(self.volume)
+	
+	def volumeUp(self):
+		if (self.volume + 10) > 100:
+			self.volume = 100
+		else:
+			self.volume += 10
+		pygame.mixer.music.set_volume(self.volume)
+
 ''''''#
 ''''''# Functions
 ''''''#
@@ -168,7 +245,6 @@ def resetScores():
 	for team in TEAM_DICT:
 		TEAM_DICT[team].score = 0
 		TEAM_DICT[team].updateBalancedScore()
-	Queue.adjustQueued(-Queue.getQueued())
 	saveTeamData()
 	print("Done.")
 
@@ -185,6 +261,7 @@ def resetMatches():
 		TEAM_DICT[team].matchesPlayed = 0
 		TEAM_DICT[team].matchesWon = 0
 		TEAM_DICT[team].updateBalancedScore()
+	Queue.adjustQueued(-Queue.getQueued())
 	print("Done.")
 	updateLeaderboard()
 
@@ -211,6 +288,12 @@ Returns : The path to the data folder.
 def getDataFilePath():
 	scriptDir	= os.path.dirname("__file__")
 	dataFolder	= "data"
+	path		= os.path.join(scriptDir, dataFolder)
+	return path
+
+def getMusicFilePath():
+	scriptDir	= os.path.dirname("__file__")
+	dataFolder	= "music"
 	path		= os.path.join(scriptDir, dataFolder)
 	return path
 
@@ -317,7 +400,6 @@ def setMatchCompleted(match):
 	fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
 	dataLines	= fileHandle.readlines()
 	fileHandle.close()
-
 	matchStr_0 = match[0] + ":" + match[1]
 	matchStr_1 = match[1] + ":" + match[0]
 	for i in range(len(dataLines)):
@@ -460,6 +542,10 @@ R_MATCHES_C		= (C_LGRAY,	pygame.Rect(xUnit * 12, yUnit * 1,  xUnit * 4,  yUnit *
 GameController = ServerThread()
 GameController.daemon = True
 GameController.start()
+MusicDJ = MusicSystem() # Create a DJ
+songs = MusicDJ.loadSongs()
+MusicDJ.createQueue(songs)
+MusicDJ.playNextSongByIndex(0)
 
 # Start the GUI controller
 pygame.draw.rect(DISPLAY_SURFACE, *R_TITLE_C)
@@ -522,6 +608,13 @@ while True:
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
 			pygame.quit()
+			print("Quitting...")
 			quit()
+		elif event.type == (pygame.USEREVENT + 1): #Music ended
+			queue = MusicDJ.getQueue()
+			next_song = random.choice(queue)
+			while next_song == queue[MusicDJ.getCurrentSongIndex()]:
+				next_song = random.choice(queue)
+			MusicDJ.playNextSongByName(next_song)	
 	pygame.display.update()
 	time.sleep(0.02)
