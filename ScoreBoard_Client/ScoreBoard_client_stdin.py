@@ -149,6 +149,10 @@ def sendCmd(cmd):
 		if strings.count(":") == 1:
 			teams = strings.split(":")
 			return teams
+		else:
+			print("Received data back from server, but it wasnt formattable, so either match list is empty, or has 2 already queued")
+			teams = ["NULL"]
+			return teams
 
 """
 Renders and blits a series of strings in the centre of a rect.
@@ -172,12 +176,22 @@ def blitInRect(rect, font, colour, *strings, startingY=-1, gapY=0):
 		DISPLAY_SURFACE.blit(element, elementRect)
 		midY += gapY + elementRect.height
 
+"""
+Gets the path to the data folder, use when accessing files like methods.txt
+
+Returns: file path to data folder
+"""
 def getDataFilePath():
 	scriptDir = os.path.dirname("__file__")
 	dataFolder = "data"
 	path = os.path.join(scriptDir, dataFolder)
 	return path
 
+"""
+Reads the methods text folder to create a dictionary of methods and their respective score value
+
+Returns a dictionary of methods in form Dictionary[Method Name] = Score integer
+"""
 def readScoreMethods():
 	fileHandle = open(getDataFilePath() + "/methods.txt", "r")
 	dataLines = fileHandle.readlines()
@@ -189,6 +203,11 @@ def readScoreMethods():
 		methodDict[scoreMethod[0]] = scoreMethod[1] # methodDict[method] = score
 	return methodDict
 
+"""
+Reads the methods text file, but instead of creating a dictionary this returns a list of method names only
+
+Returns a list of the method names
+"""
 def readMethodNames():
 	fileHandle = open(getDataFilePath() + "/methods.txt", "r")
 	dataLines = fileHandle.readlines()
@@ -202,6 +221,11 @@ def readMethodNames():
 		index += 1
 	return methods
 
+"""
+Constructs a scoring method by splitting a method string and parsing the integer section
+
+Returns a list containing the method name and the integer score value
+"""
 def constructScoreMethod(string): #AKA split the string, parse integer
 	raw = string.split(":")
 	print(raw)
@@ -216,6 +240,12 @@ def constructScoreMethod(string): #AKA split the string, parse integer
 		print("Weird stuff happened")
 	return cooked
 
+"""
+Handles serial events from the arduino
+
+Takes parameter data, a string with a potential command.
+Returns nothing
+"""
 def handleSerialRead(data):
 	strippedData = data.strip().upper()
 	print("[COM] Stripped Data: %s   |   Raw: %s" % (strippedData, data))
@@ -234,7 +264,8 @@ def handleSerialRead(data):
 	elif strippedData == "N": #get next match COM data
 		print("[COM] Getting next match")
 		teams = sendCmd("next_match")
-		ScoreSystem.insertTeamNames(teams[0], teams[1])
+		if len(teams) == 2:
+			ScoreSystem.insertTeamNames(teams[0], teams[1])
 	else: # if it wasnt one of the above 3, it must be a score method
 		print("[COM] Data was not a start match condition, checking scoring methods...")
 		methods = readMethodNames()
@@ -262,18 +293,42 @@ def handleSerialRead(data):
 			i += 1
 	print("[COM] Handle complete.")	
 
+"""
+This function is threaded to always receive data from the comm port
+
+Returns nothing
+"""
 def readSerialConnection(ser):
 	while True:
 		print("[COM] Awaiting...")
-		reading = ser.readline().decode()
+		reading = ser.readline().decode() # blocking until data is received, so if you send next_match and its waiting for data back, the GUI wont respond until such data arrives
 		handleSerialRead(reading)
 		
+"""
+Updates the latest score method for each team
+
+Takes parameters:
+	index - integer of 0 or 1 to edit method for, team 1 and 2 respectively
+	methodIn - string of the method name that happened
+Returns nothing
+"""
 def updateMethod(index, methodIn):
 	method[index] = methodIn
 
-''''''#
+
+
+
+
+
+
+
+
+''''''# *****************************************************
 ''''''# Client Loop and main code begins here
-''''''#
+''''''# *****************************************************
+
+
+
 print("Listing COM ports:")
 for port in serial.tools.list_ports.comports():
 	print(port)
@@ -400,7 +455,8 @@ while True: #Main Loop
 		elif event.type == pygame.KEYDOWN: ## Ease of testing events while keeping the GUI from crashing
 			if event.key == pygame.K_n:
 				teams = sendCmd("next_match")
-				ScoreSystem.insertTeamNames(teams[0], teams[1])
+				if len(teams) == 2:
+					ScoreSystem.insertTeamNames(teams[0], teams[1])
 			elif event.key == pygame.K_r:
 				sendCmd("reset")
 			elif event.key == pygame.K_s:

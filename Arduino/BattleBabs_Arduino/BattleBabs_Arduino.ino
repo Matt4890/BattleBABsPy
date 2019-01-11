@@ -13,7 +13,7 @@ const String methods[] = {"rubberband","pingpong","shove","disable"}; // the sco
 #define NUM_OF_METHODS 4
 
 const int specialButtons[] = {11,12}; // buttons for special buttons (start match, request next match)
-const String specialEvents[] = {"n","s"}; // events to send for the special buttons
+const String specialEvents[] = {"n","s"}; // events to send for the special buttons, n is request next match, s is start match
 #define NUM_OF_SPEC 2
 
 //pin 13 is status LED

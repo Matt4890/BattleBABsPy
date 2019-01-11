@@ -127,6 +127,32 @@ class Team():
 		self.matchesWon		+= 1 if won else 0
 		self.updateBalancedScore()
 
+class MatchSystem():
+	def __init__(self, queued = 0, maxq = 2):
+		self.queued	= queued
+		self.maxq = maxq
+		
+
+	def __repr__(self):
+		return "%s:%i" % (
+			self.queued,
+			self.maxq
+		)
+
+	def setMax(self, value):
+		self.maxq = value
+	
+	def getMax(self):
+		return self.maxq
+	
+	def adjustQueued(self, deltaValue):
+		self.queued += deltaValue
+		if self.queued < 0:
+			self.queued = 0
+	
+	def getQueued(self):
+		return self.queued
+
 ''''''#
 ''''''# Functions
 ''''''#
@@ -142,6 +168,7 @@ def resetScores():
 	for team in TEAM_DICT:
 		TEAM_DICT[team].score = 0
 		TEAM_DICT[team].updateBalancedScore()
+	Queue.adjustQueued(-Queue.getQueued())
 	saveTeamData()
 	print("Done.")
 
@@ -251,22 +278,31 @@ A completed match is noted by a '~' as the first character of the line.
 
 Returns : A string of the teams in the next match formatted as TEAM1:TEAM2.
 """
+Queue = MatchSystem(0,2) # start queue system, initial queue of 0, max of 2
+
 def getNextMatch():
 	match = ""
 	matchList = getMatchList()
 	if len(matchList) == 0:
-		print("Matchlist is empty! Client will crash if empty match given, returning a Null match")
-		match = "NULL:NULL"
+		print("Matchlist is empty! Returning junk data so it isnt formatted")
+		match = "NONE"
 		return match
 	else:
-		for line in getMatchList():
-			if line[0] != "~":
-				match = line.strip()
-				if match.find(">") == -1:
-					break
-		match = "NONE" if match == "" else match
-		return match
-
+		if Queue.getQueued() >= Queue.getMax():
+			print("Too many matches queued! returning junk data so it isnt formatted")
+			match = "NONE"
+			return match
+		else:
+			for line in getMatchList():
+				if line[0] != "~":
+					match = line.strip()
+					if match.find(">") == -1:
+						break
+			match = "NONE" if match == "" else match
+			print("selected match: %s" % (match))
+			Queue.adjustQueued(1)
+			print("queued is %i, max %i" % (Queue.getQueued(), Queue.getMax()))
+			return match
 """
 Sets a match in the 'matches.txt' file to 'completed' status.
 AKA it deletes it
@@ -292,6 +328,7 @@ def setMatchCompleted(match):
 	fileHandle	= open(getDataFilePath() + "/matches.txt", "w")
 	fileHandle.writelines(dataLines)
 	fileHandle.close()
+	Queue.adjustQueued(-1)
 
 def setMatchQueued(match):
 	# Gotcha now, ya damn bug.
