@@ -38,7 +38,7 @@ class ServerThread(Thread):
 			# Wait for and gather data to be used.
 			rawData, client = SOCK.recvfrom(1024) # buffer size is 1024 bytes
 			cookedData = rawData.decode("ascii").strip().upper()
-			print("\nReceived message: '%s' from" % cookedData, client)
+			print("\n\nReceived message: '%s' from" % cookedData, client)
 
 			# If a client requested the next match...
 			if cookedData == "NEXT_MATCH":
@@ -47,7 +47,7 @@ class ServerThread(Thread):
 				names = match.split(":")
 				SOCK.sendto(match.encode("ascii"), client)
 				setMatchQueued(names)
-				print("Done.")
+				print("Done.\n\n")
 				continue
 
 			# If a client requested for the scores to be reset...
@@ -90,12 +90,12 @@ class ServerThread(Thread):
 					setMatchCompleted(match)
 					saveTeamData()
 				else:
-					print("Team(s) not recognized. Ignoring.")
+					print("Team(s) not recognized. Ignoring.\n\n")
 
 				continue
 
 			# Otherwise... We can't comply to instructions we can't understand ¯\_(ツ)_/¯
-			print("Message not recognized. Ignoring.")
+			print("Message not recognized. Ignoring.\n\n")
 
 
 ''''''#
@@ -168,25 +168,46 @@ class MusicSystem():
 	def loadSongs(self):
 		filePath = getMusicFilePath()
 		onlyFiles = [f for f in listdir(filePath) if isfile(join(filePath, f))] # get only files in the music directory
+		print("Loading song files into queue...\n\n\n")
+		for songFile in onlyFiles:
+			print(songFile)
+			split = songFile.strip().upper().split(".") # get extension off of file name
+			for splitResult in split:
+				print(">>" + splitResult)
+			if split[len(split) - 1] != "OGG": # look a last item (incase multiple dots in path) and check extension
+				onlyFiles.remove(songFile)
+				print("><Removed %s from queue as its extension is not ogg" % (songFile))
+
 		if len(onlyFiles) == 0:
-			print("No music in directory! pygame music mixer wont be utilized")
+			print("<>No music in directory! pygame music mixer wont be utilized")
 			self.canUtilize = False
 		else:
-			print("Files were found. pygame music mixer will be utilized")
+			print("<>OGG files were found. pygame music mixer will be utilized")
 			self.canUtilize = True
 			pygame.mixer.init(frequency=44100) # ensure music sample is 44100Hz for nice playback
 			return onlyFiles
 
+	def getCurrentSongName(self):
+		song = None
+		songSplit = []
+		if self.playing == -1:
+			song = "None"
+			return song
+		else:
+			songSplit = self.queue[self.playing].strip().upper().split(".")
+			return songSplit[0]
+
 	def createQueue(self, fileList):
 		if self.canUtilize == True:
-			print("Creating a music Queue")
+			print("Creating a music Queue...")
 			self.queue = fileList
-			print("Randomizing queue")
+			print("Queue length is %i" % (len(self.queue)))
+			print("Randomizing queue...")
 			random.shuffle(self.queue)
 			SONG_END = pygame.USEREVENT + 1
 			pygame.mixer.music.set_endevent(SONG_END) # setup an event
 		else:
-			print("Cant be executed! mixer isnt enabled because no files found in music directory")
+			print("!!Cant be executed! mixer isnt enabled because no files found in music directory\n")
 	
 	def getCurrentSongIndex(self):
 		return self.playing
@@ -199,22 +220,23 @@ class MusicSystem():
 	
 	def playNextSongByIndex(self, index):
 		if self.canUtilize == True:
-			print("selecting song from index %i" % (index))
-			print("Selected is :" + self.queue[index])
+			print("Selecting song from index %i" % (index))
+			print("Selected is :" + self.queue[index] + "\n\n")
 			pygame.mixer.music.load(getMusicFilePath() + "/" + self.queue[index])
 			pygame.mixer.music.play(1)
 			self.playing = index
 		else:
-			print("Cant play a song, mixer music isnt utilized")
+			print("!!Cant play a song, mixer music isnt utilized\n")
 	
 	def playNextSongByName(self, name):
 		if self.canUtilize == True:
 			pygame.mixer.music.stop()
 			pygame.mixer.music.load(getMusicFilePath() + "/" + name)
 			pygame.mixer.music.play(1)
+			print("Now playing song: %s (picked by RNG by name)\n\n" % (name))
 			self.playing = queue.index(name)
 		else:
-			print("Cant play a song, mixer music isnt utilized")
+			print("!!Cant play a song, mixer music isnt utilized\n")
 	
 	def volumeDown(self):
 		if (self.volume - 10) < 0:
@@ -439,9 +461,10 @@ It is sorted by each team's score, largest to smallest.
 def updateLeaderboard():
 	global LEADERBOARD
 	LEADERBOARD = sorted(TEAM_DICT, key=lambda team: TEAM_DICT[team].score, reverse=True)
-	print("Leaderboard updated. Current ranking:")
+	print("\n\nLeaderboard updated. Current ranking:")
 	for team in LEADERBOARD:
 		print(TEAM_DICT[team].__repr__().replace(':', "\t\t", 1))
+	print("\n\n")
 
 """
 Renders and blits a series of strings in the centre of a rect.
@@ -502,9 +525,10 @@ DISPLAY_SURFACE	= pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))#, pygam
 pygame.display.set_caption("Battle BABs - Server")
 
 # Fonts
-LARGE_FONT	= pygame.font.SysFont("monospace", 52, True)
-MEDIUM_FONT	= pygame.font.SysFont("monospace", 36, True)
-SMALL_FONT	= pygame.font.SysFont("monospace", 24, True)
+LARGE_FONT	    = pygame.font.SysFont("monospace", 52, True)
+MEDIUM_FONT	    = pygame.font.SysFont("monospace", 36, True)
+SMALL_FONT	    = pygame.font.SysFont("monospace", 24, True)
+SUPERSMALL_FONT	= pygame.font.SysFont("monospace", 18, True)
 
 # Colours   R    G    B
 C_LGRAY	= ( 72,  96, 112)
@@ -552,7 +576,7 @@ pygame.draw.rect(DISPLAY_SURFACE, *R_TITLE_C)
 blitInRect(R_TITLE_C[1], LARGE_FONT, C_MINT, "Battle", "BABs", time.strftime("%Y"))
 
 # Control Column (?)
-pygame.draw.rect(DISPLAY_SURFACE, *R_CONTROL_C)
+
 
 # Leaderboard
 pygame.draw.rect(DISPLAY_SURFACE, *R_LEADERBOARD_R)
@@ -580,6 +604,8 @@ while True:
 	# Apparently lists don't keep their order outside of a function?
 	# Or it thinks its a local variable in the function?
 	#LEADERBOARD = sorted(TEAM_DICT, key=lambda team: TEAM_DICT[team].score, reverse=True)
+	pygame.draw.rect(DISPLAY_SURFACE, *R_CONTROL_C)
+	blitInRect(R_CONTROL_C[1], SUPERSMALL_FONT, C_DGRAY, "Current Song:", MusicDJ.getCurrentSongName())
 
 	# Leaderboard
 	pygame.draw.rect(DISPLAY_SURFACE, *R_RANK_C)
