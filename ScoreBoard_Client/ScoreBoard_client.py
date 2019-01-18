@@ -113,12 +113,8 @@ class TimerSystem():
 		self.start = state
 		print("State is " + str(self.start))
 		if self.start == True:
-		#	pygame.mixer.music.rewind()
-		#	pygame.mixer.music.play()
 			self.timeRem = self.matchLength
-		#else:
-		#	pygame.mixer.music.stop()
-		#	pygame.mixer.music.rewind()
+		else:
 			buzzerSound.play()
 	
 	def getState(self):
@@ -301,9 +297,12 @@ def handleSerialRead(data):
 		Time.setState(False)
 	elif strippedData == "N": #get next match COM data
 		print("[COM] Getting next match")
-		teams = sendCmd("next_match")
-		if len(teams) == 2:
-			ScoreSystem.insertTeamNames(teams[0], teams[1])
+		if(Time.getState() == False):
+			teams = sendCmd("next_match")
+			if len(teams) == 2:
+				ScoreSystem.insertTeamNames(teams[0], teams[1])
+		else:
+			print("Match running, cant get new teams")
 	else: # if it wasnt one of the above 3, it must be a score method
 		print("[COM] Data was not a start match condition, checking scoring methods...")
 		methods = readMethodNames()
@@ -497,9 +496,12 @@ while True: #Main Loop
 			quit()
 		elif event.type == pygame.KEYDOWN: #Debug/override of events
 			if event.key == pygame.K_n:
-				teams = sendCmd("next_match")
-				if len(teams) == 2:
-					ScoreSystem.insertTeamNames(teams[0], teams[1])
+				if(Time.getState() == False):
+					teams = sendCmd("next_match")
+					if len(teams) == 2:
+						ScoreSystem.insertTeamNames(teams[0], teams[1])
+				else:
+					print("Match running, cant get new teams")
 
 			elif event.key == pygame.K_r:
 				sendCmd("reset") # resets all data on server side, cant be undone
@@ -516,14 +518,20 @@ while True: #Main Loop
 			elif event.key == pygame.K_PERIOD: # Debug add 1 point to team 2
 				if matchState == True:
 					ScoreSystem.changeTeam2Score(1)
+					updateMethod(1,"ADMIN") # reset latest scoring method for team 1
 
 			elif event.key == pygame.K_COMMA: # Debug add 1 point to team 1
 				if matchState == True:
 					ScoreSystem.changeTeam1Score(1)
+					updateMethod(0,"ADMIN") # reset latest scoring method for team 1
 
 			elif event.key == pygame.K_SPACE: # Debug start match
 				Time.setState(True)
 				startTime = time.time()
+				updateMethod(0," ") # reset latest scoring method for team 1
+				updateMethod(1," ") # reset latest scoring method for team 2
+				ScoreSystem.changeTeam1Score(-ScoreSystem.getTeam1Score())#reset score for team 1
+				ScoreSystem.changeTeam2Score(-ScoreSystem.getTeam2Score())#reset score for team 2
 
 			elif event.key == pygame.K_b: # debug stop match without match send
 				Time.setState(False) # debug match stop

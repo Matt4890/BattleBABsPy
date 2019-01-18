@@ -205,7 +205,7 @@ class MusicSystem():
 			print("Randomizing queue...")
 			random.shuffle(self.queue)
 			SONG_END = pygame.USEREVENT + 1
-			pygame.mixer.music.set_endevent(SONG_END) # setup an event
+			pygame.mixer.music.set_endevent(SONG_END) # setup an event system so we can change music
 		else:
 			print("!!Cant be executed! mixer isnt enabled because no files found in music directory\n")
 	
@@ -238,24 +238,10 @@ class MusicSystem():
 		else:
 			print("!!Cant play a song, mixer music isnt utilized\n")
 	
-	def volumeDown(self):
-		if (self.volume - 10) < 0:
-			self.volume = 0
-		else:
-			self.volume -= 10
-		pygame.mixer.music.set_volume(self.volume)
-	
-	def volumeUp(self):
-		if (self.volume + 10) > 100:
-			self.volume = 100
-		else:
-			self.volume += 10
-		pygame.mixer.music.set_volume(self.volume)
 
 ''''''#
 ''''''# Functions
 ''''''#
-
 
 """
 SUMMARY: Resets the scores of each team
@@ -367,7 +353,9 @@ def genNewMatches(teams):
 	fileHandle	= open(getDataFilePath() + "/matches.txt", "w")
 	fileHandle.writelines(matches)
 	fileHandle.close()
-
+"""
+Reads the matchlist file to load the match list
+"""
 def getMatchList():
 	fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
 	dataLines	= fileHandle.readlines()
