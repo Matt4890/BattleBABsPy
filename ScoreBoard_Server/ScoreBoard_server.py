@@ -554,7 +554,7 @@ R_MATCHES_C		= (C_LGRAY,	pygame.Rect(xUnit * 12, yUnit * 1,  xUnit * 4,  yUnit *
 GameController = ServerThread()
 GameController.daemon = True
 GameController.start()
-MusicDJ = MusicSystem() # Create a DJ
+MusicDJ = MusicSystem() # Create a DJ for music control
 songs = MusicDJ.loadSongs()
 MusicDJ.createQueue(songs)
 MusicDJ.playNextSongByIndex(0)
@@ -625,10 +625,10 @@ while True:
 			print("Quitting...")
 			quit()
 		elif event.type == (pygame.USEREVENT + 1): #Music ended
-			queue = MusicDJ.getQueue()
-			next_song = random.choice(queue)
-			while next_song == queue[MusicDJ.getCurrentSongIndex()]:
+			queue = MusicDJ.getQueue() # we need the queue so we can choose a random song
+			next_song = random.choice(queue) # choose a random song from the queue
+			while next_song == queue[MusicDJ.getCurrentSongIndex()]: #anti-repeat loop
 				next_song = random.choice(queue)
-			MusicDJ.playNextSongByName(next_song)	
-	pygame.display.update()
-	time.sleep(0.02)
+			MusicDJ.playNextSongByName(next_song) # load the next song and play it	
+	pygame.display.update() # update the display
+	time.sleep(0.02) # CPU usage limiting delay, 20ms
