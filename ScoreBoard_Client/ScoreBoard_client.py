@@ -711,7 +711,7 @@ while True: #Main Loop
 					ScoreSystem.changeTeam2Score(1)
 					updateMethod(1,"ADMIN+") # reset latest scoring method for team 1
 
-			elif event.key == pygame.K_PERIOD: # Debug sub 1 point to team 2
+			elif event.key == pygame.K_z: # Debug sub 1 point to team 2
 				if matchState == True:
 					ScoreSystem.changeTeam2Score(-1)
 					updateMethod(1,"ADMIN-") # reset latest scoring method for team 1
