@@ -2,9 +2,9 @@
 Desc.
 """
 
-''''''#
+''''''#*****************************************************************************************************
 ''''''# Imports
-''''''#
+''''''#*****************************************************************************************************
 
 import os
 from os import listdir
@@ -15,15 +15,27 @@ import socket
 from threading import Thread
 import time
 
-''''''#
+''''''#*****************************************************************************************************
 ''''''# Thread Classes
-''''''#
+''''''#*****************************************************************************************************
 
+"""
+Class ServerThread
+SUMMARY: This class is setup as a thread for handling client events
+INIT PARAMETERS:
+	NONE
+"""
 class ServerThread(Thread):
 
 	def __init__(self):
-		Thread.__init__(self)
-
+		Thread.__init__(self) # init threading
+	"""
+	run(self)
+	SUMMARY: Main execution point of the class
+	PARAMETERS:
+		NONE
+	RETURNS VOID
+	"""
 	def run(self):
 		"""
 		Waits until a UDP message is received.
@@ -98,10 +110,19 @@ class ServerThread(Thread):
 			print("Message not recognized. Ignoring.\n\n")
 
 
-''''''#
+''''''#*****************************************************************************************************
 ''''''# Generic Classes
-''''''#
+''''''#*****************************************************************************************************
 
+"""
+Class Team
+SUMMARY: This class defines a team
+INIT PARAMETERS:
+	string name - String of the team's name
+	int score - integer of team's score
+	int matchesPlayed - integer of matches played by team
+	int matchesWon - integer of matches won by team
+"""
 class Team():
 
 	def __init__(self, name, score = 0, matchesPlayed = 0, matchesWon = 0):
@@ -120,14 +141,38 @@ class Team():
 			self.balancedScore
 		)
 
+	"""
+	updateBalancedScore(self)
+	SUMMARY: Updates the balanced (Overall Average) score of the team
+	PARAMETERS:
+		NONE
+	RETURNS VOID
+	"""
 	def updateBalancedScore(self):
 		self.balancedScore	= self.score // self.matchesPlayed if self.matchesPlayed > 0 else 0
 
+	"""
+	addMatch(self, score, won)
+	SUMMARY: Adds match data to the team
+	PARAMETERS:
+		int score - integer score from the match
+		bool won - Boolean for if this team won the match
+	RETURNS VOID
+	"""
 	def addMatch(self, score, won):
 		self.score			+= score
 		self.matchesPlayed	+= 1
 		self.matchesWon		+= 1 if won else 0
 		self.updateBalancedScore()
+
+
+"""
+Class MatchSystem
+SUMMARY: This class creates a queue framework for use with scoreboards
+INIT PARAMETERS:
+	int queued - integer of queued matches (defaults to 0 because why would you say there are already matches queued on creation?)
+	int maxq - integer of maximum allowable queued matched (Have this match the number of unique scoreboard instances)
+"""
 
 class MatchSystem():
 	def __init__(self, queued = 0, maxq = 2):
@@ -141,20 +186,53 @@ class MatchSystem():
 			self.maxq
 		)
 
+	"""
+	setMax(self, value)
+	SUMMARY: Sets the maximum number of queued matches
+	PARAMETERS:
+		int value - integer of maximum queued matches to have
+	RETURNS VOID
+	"""
 	def setMax(self, value):
 		self.maxq = value
 	
+	"""
+	getMax(self)
+	SUMMARY: Gets the current maximum number of queued matches
+	PARAMETERS:
+		NONE
+	RETURNS: int maxq - integer of maximum number of queued matches
+	"""
 	def getMax(self):
 		return self.maxq
 	
+	"""
+	adjustQueued(self, deltaValue)
+	SUMMARY: Adjusts the current number of queued matches by the delta given
+	PARAMETERS:
+		int deltaValue - integer of how many matches and in what direction to change the queued list by
+	RETURNS VOID
+	"""
 	def adjustQueued(self, deltaValue):
 		self.queued += deltaValue
 		if self.queued < 0:
 			self.queued = 0
 	
+	"""
+	getQueued(self)
+	SUMMARY: Gets the current number of queued matches
+	PARAMETERS:
+		NONE
+	RETURNS: int queued - integer of number of matches queued
+	"""
 	def getQueued(self):
 		return self.queued
-
+"""
+Class Music System
+SUMMARY: Creates a Music system to play .ogg files optimally sampled at 44.1kHz. Most music files can be easily changed to this using Audacity
+INIT PARAMETERS:
+	NONE
+"""
 class MusicSystem():
 	def __init__(self):
 		self.canUtilize = False
@@ -165,6 +243,15 @@ class MusicSystem():
 	def __repr__(self):
 		print("foo")
 
+	"""
+	loadSong(self)
+	SUMMARY: Loads .ogg filenames from the music folder into a queue array
+	PARAMETERS:
+		NONE
+	RETURNS: Case Dependent:
+		If .ogg files exist in the music directory -> Returns list queue - a list containing filenames of playable files
+		If no .ogg files exist in the music directory -> Returns VOID
+	"""
 	def loadSongs(self):
 		filePath = getMusicFilePath()
 		onlyFiles = [f for f in listdir(filePath) if isfile(join(filePath, f))] # get only files in the music directory
@@ -187,6 +274,15 @@ class MusicSystem():
 			pygame.mixer.init(frequency=44100) # ensure music sample is 44100Hz for nice playback
 			return onlyFiles
 
+	"""
+	getCurrentSongName(self)
+	SUMMARY: Gets the current song's name
+	PARAMETERS:
+		NONE
+	RETURNS: Case Dependent:
+		IF playing = -1 -> RETURNS "NONE"
+		IF playing != -1 -> RETURNS string song - name of song currently playing
+	"""
 	def getCurrentSongName(self):
 		song = None
 		songSplit = []
@@ -197,6 +293,13 @@ class MusicSystem():
 			songSplit = self.queue[self.playing].strip().upper().split(".")
 			return songSplit[0]
 
+	"""
+	createQueue(self, fileList)
+	SUMMARY: creates a queue and shuffles it
+	PARAMETERS:
+		fileList - list of filenames to use in queue
+	RETURNS: VOID
+	"""
 	def createQueue(self, fileList):
 		if self.canUtilize == True:
 			print("Creating a music Queue...")
@@ -208,16 +311,44 @@ class MusicSystem():
 			pygame.mixer.music.set_endevent(SONG_END) # setup an event system so we can change music
 		else:
 			print("!!Cant be executed! mixer isnt enabled because no files found in music directory\n")
-	
+
+	"""
+	getCurrentSongIndex(self)
+	SUMMARY: Gets the current index of the song that is playing (in terms of the shuffled queue)
+	PARAMETERS:
+		NONE
+	RETURNS int index - integer of the index in the queue of the current song
+	"""
 	def getCurrentSongIndex(self):
 		return self.playing
 	
+	"""
+	getQueueLength(self)
+	SUMMARY: Gets the length of the queue
+	PARAMETERS:
+		NONE
+	RETURNS int length - integer of the length of the queue list
+	"""
 	def getQueueLength(self):
 		return len(self.queue)
 	
+	"""
+	getQueue(slef)
+	SUMMARY: Gets the entire queue list
+	PARAMETERS:
+		NONE
+	RETURNS list queue - list of the queue for the music instance
+	"""
 	def getQueue(self):
 		return self.queue
 	
+	"""
+	playNextSongByIndex(self, index)
+	SUMMARY: Starts playing the next song, referenced by the given index number
+	PARAMETERS:
+		int index - integer index into the queue array to get the next song to play
+	RETURNS VOID
+	"""
 	def playNextSongByIndex(self, index):
 		if self.canUtilize == True:
 			print("Selecting song from index %i" % (index))
@@ -228,6 +359,13 @@ class MusicSystem():
 		else:
 			print("!!Cant play a song, mixer music isnt utilized\n")
 	
+	"""
+	playNextSongByName(self, name)
+	SUMMARY: Starts playing the next song, referenced by name instead of index number
+	PARAMETERS:
+		string name - string of the next song to play
+	RETURNS VOID
+	"""
 	def playNextSongByName(self, name):
 		if self.canUtilize == True:
 			pygame.mixer.music.stop()
@@ -239,14 +377,16 @@ class MusicSystem():
 			print("!!Cant play a song, mixer music isnt utilized\n")
 	
 
-''''''#
+''''''#*****************************************************************************************************
 ''''''# Functions
-''''''#
+''''''#*****************************************************************************************************
 
 """
+resetScores()
 SUMMARY: Resets the scores of each team
-PARAMETERS: NONE
-RETURNS: VOID
+PARAMETERS:
+	NONE
+RETURNS VOID
 """
 def resetScores():
 	print("Resetting team scores to 0...")
@@ -257,9 +397,11 @@ def resetScores():
 	print("Done.")
 
 """
+resetMatches()
 SUMMARY: Resets the matches played and won of each team, and generates a new match list
-PARAMATERS: NONE
-REUTNRS: VOID
+PARAMATERS:
+	NONE
+REUTNRS VOID
 """
 def resetMatches():
 	print("Generating a new match list...")
@@ -274,7 +416,11 @@ def resetMatches():
 	updateLeaderboard()
 
 """
-'NAME:SCORE:MATCHES_PLAYED:MATCHES_WON'
+constructTeamFromStr(string)
+SUMMARY: Constructs a Team instance from the given string
+PARAMETERS:
+	string string - string in format "Name:Score:Played:Won" to create a team from
+RETURNS Team team - team class instance initialized based off of given string
 """
 def constructTeamFromStr(string):
 	rawBits = string.split(":")
@@ -293,23 +439,60 @@ Finds the absolute file path to the script's local data directory.
 
 Returns : The path to the data folder.
 """
+"""
+getDataFilePath()
+SUMMARY: Gets the file path to the data folder for future reference
+PARAMETERS:
+	NONE
+RETURNS: Case Dependent:
+	IF path exists -> Returns data folder path
+	IF path doesn't exist -> Returns VOID and raises FileNotFoundError
+"""
 def getDataFilePath():
 	scriptDir	= os.path.dirname("__file__")
 	dataFolder	= "data"
 	path		= os.path.join(scriptDir, dataFolder)
-	return path
+	if(os.path.exists(path)):
+		return path
+	else:
+		raise FileNotFoundError()
 
+"""
+getMusicFilePath()
+SUMMARY: Gets the file path to the music folder for future reference. Similar to getDataFilePath()
+PARAMETERS:
+	NONE
+RETURNS: Case Dependent:
+	IF path exists -> Returns music folder path
+	IF path doesn't exist -> Returns VOID and raises FileNotFoundError
+"""
 def getMusicFilePath():
 	scriptDir	= os.path.dirname("__file__")
 	dataFolder	= "music"
 	path		= os.path.join(scriptDir, dataFolder)
-	return path
+	if(os.path.exists(path)):
+		return path
+	else:
+		raise FileNotFoundError()
 
 """
 Reads in the team object stored in './data/teams.txt'
 """
+"""
+readTeamData()
+SUMMARY: Reads the team data in the teams data file
+PARAMETERS:
+	NONE
+RETURNS: Case dependent
+	IF teams file exists -> Returns dictionary of teams
+	IF teams file doesn't exist -> Returns VOID and raises FileNotFoundError
+"""
 def readTeamData():
-	fileHandle	= open(getDataFilePath() + "/teams.txt", "r")
+	if(os.path.exists(getDataFilePath() + "/teams.txt")):
+		fileHandle	= open(getDataFilePath() + "/teams.txt", "r")
+	else:
+		raise FileNotFoundError("teams.txt data file cannot be found. Check naming and try again.")
+
 	dataLines	= fileHandle.readlines()
 	fileHandle.close()
 
@@ -322,26 +505,35 @@ def readTeamData():
 	return teamDict
 
 """
-Saves the data stored in the score dictionary into './data/teams.txt'.
-Each line is formatted as: TEAM:SCORE.
+saveTeamData()
+SUMMARY: Saves the team data in the team dictionary to the teams data file
+PARAMETERS:
+	NONE
+RETURNS VOID
 """
 def saveTeamData():
 	dataLines = []
 	for team in TEAM_DICT:
 		dataLines.append(repr(TEAM_DICT[team]) + "\n")
 
-	fileHandle	= open(getDataFilePath() + "/teams.txt", "w")
+	#open line chooses to either make the file or write to it depending on if it exists
+	if(os.path.exists(getDataFilePath() + "/teams.txt")):
+		fileHandle = open(getDataFilePath() + "/teams.txt", "w")
+	else:
+		fileHandle = open(getDataFilePath() + "/teams.txt", "x")
+
 	fileHandle.writelines(dataLines)
+	fileHandle.flush() # sanity flush, shouldn't be needed but you never know
 	fileHandle.close()
 
 	updateLeaderboard()
 
 """
-Takes a list of teams, and creates a round-robin style match list where each team faces every other team once.
-The match list is then shuffled into a random order and written to data/matches.txt.
-Each line is formatted as: TEAM1:TEAM2.
-
-teams : A list of team names as strings.
+genNewMatches(teams)
+SUMMARY: Generates a new matchlist from the given list of teams, round-robin style and shuffled into random order
+PARAMETERS:
+	list teams - list of team names to create matches with
+RETURNS VOID
 """
 def genNewMatches(teams):
 	matches = []
@@ -350,14 +542,28 @@ def genNewMatches(teams):
 			matches.append(teams[i] + ":" + teams[j] + "\n")
 	random.shuffle(matches)
 
-	fileHandle	= open(getDataFilePath() + "/matches.txt", "w")
+	if (os.path.exists(getDataFilePath() + "/matches.txt")):
+		fileHandle	= open(getDataFilePath() + "/matches.txt", "w")
+	else:
+		fileHandle = open(getDataFilePath() + "/matches.txt", "x")
+
 	fileHandle.writelines(matches)
 	fileHandle.close()
+
 """
-Reads the matchlist file to load the match list
+getMatchList()
+SUMMARY: gets the current stored matchlist from the matches text file
+PARAMETERS:
+	NONE
+RETURNS: Case Dependent:
+	IF matches file exists -> Returns list of lines from the matches text file
+	IF matches file doesn't exist -> Returns VOID and raises FileNotFoundError
 """
 def getMatchList():
-	fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
+	if(os.path.exists(getDataFilePath() + "/matches.txt")):
+		fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
+	else:
+		raise FileNotFoundError("matches.txt could not be found in the data folder, check naming and try again.")
 	dataLines	= fileHandle.readlines()
 	fileHandle.close()
 
@@ -373,6 +579,15 @@ Returns : A string of the teams in the next match formatted as TEAM1:TEAM2.
 """
 Queue = MatchSystem(0,2) # start queue system, initial queue of 0, max of 2
 
+"""
+getnextMatch()
+SUMMARY: gets the next match that isn't already queued and returns it
+PARAMETERS:
+	NONE
+RETURNS: Case Dependent:
+	IF Matchlist is empty OR total number of queued matches is >= to maximum number of queued matches -> RETURNS string "NONE"
+	IF Matchlist isn't empty AND total number of queued matches < maximum number of queued matched -> RETURNS string of next match
+"""
 def getNextMatch():
 	match = ""
 	matchList = getMatchList()
@@ -396,18 +611,23 @@ def getNextMatch():
 			Queue.adjustQueued(1)
 			print("queued is %i, max %i" % (Queue.getQueued(), Queue.getMax()))
 			return match
-"""
-Sets a match in the 'matches.txt' file to 'completed' status.
-AKA it deletes it
 
-match : A list of teams in the completed match.
+"""
+setMatchCompleted(match)
+SUMMARY: Sets a match as "completed" in the matchlist file, meaning it deletes it from the file. Also decrements the total number of queued matches
+PARAMETERS:
+	string match - match string to delete
+RETURNS VOID
 """
 def setMatchCompleted(match):
 	# Gotcha now, ya damn bug.
 	if len(match) != 2 or not all(team in TEAM_DICT for team in match):
 		return
 
-	fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
+	if(os.path.exists(getDataFilePath() + "/matches.txt")):
+		fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
+	else:
+		raise FileNotFoundError("matches.txt could not be found, double check naming and try again.")
 	dataLines	= fileHandle.readlines()
 	fileHandle.close()
 	matchStr_0 = match[0] + ":" + match[1]
@@ -417,17 +637,31 @@ def setMatchCompleted(match):
 			dataLines.pop(i)
 			break
 
-	fileHandle	= open(getDataFilePath() + "/matches.txt", "w")
+	if(os.path.exists(getDataFilePath() + "/matches.txt")):
+		fileHandle	= open(getDataFilePath() + "/matches.txt", "w")
+	else:
+		fileHandle	= open(getDataFilePath() + "/matches.txt", "x")
+
 	fileHandle.writelines(dataLines)
 	fileHandle.close()
 	Queue.adjustQueued(-1)
 
+"""
+setMatchQueued(match)
+SUMMARY: Sets a match as queued in the matlist file and increments the number of queued matches. Similar to setMatchCompleted
+PARAMETERS:
+	string match - match string to set as queued
+RETURNS VOID
+"""
 def setMatchQueued(match):
 	# Gotcha now, ya damn bug.
 	if len(match) != 2 or not all(team in TEAM_DICT for team in match):
 		return
 
-	fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
+	if(os.path.exists(getDataFilePath() + "/matches.txt")):
+		fileHandle	= open(getDataFilePath() + "/matches.txt", "r")
+	else:
+		raise FileNotFoundError("matches.txt could not be found, double check naming and try again.")
 	dataLines	= fileHandle.readlines()
 	fileHandle.close()
 
@@ -438,13 +672,20 @@ def setMatchQueued(match):
 			dataLines[i] = ">" + dataLines[i]
 			break
 
-	fileHandle	= open(getDataFilePath() + "/matches.txt", "w")
+	if(os.path.exists(getDataFilePath() + "/matches.txt")):
+		fileHandle	= open(getDataFilePath() + "/matches.txt", "w")
+	else:
+		fileHandle	= open(getDataFilePath() + "/matches.txt", "x")
+		
 	fileHandle.writelines(dataLines)
 	fileHandle.close()
 
 """
-Updates the global LEADERBOARD list.
-It is sorted by each team's score, largest to smallest.
+updateLeaderboard
+SUMMARY: Updates the team order on the leaderboard, from largest (1st) to smallest (last).
+PARAMETERS:
+	NONE
+RETURNS VOID
 """
 def updateLeaderboard():
 	global LEADERBOARD
@@ -455,16 +696,19 @@ def updateLeaderboard():
 	print("\n\n")
 
 """
-Renders and blits a series of strings in the centre of a rect.
-If multiple strings are given, they are blitted in a column of descending order.
-The whole column of blitted text is still centred perfect in the rect.
+blitInRect(rect, font, colour, *strings, startingY=-1, gapY=0)
+SUMMARY: Renders and blits a series of strings in the centre of a rect.
+	If multiple strings are given, they are blitted in a column of descending order.
+	The whole column of blitted text is still centred perfect in the rect.
 
-rect		: The rect to draw the text into.
-font		: The font to render the text with.
-colour		: The colour to render the text in.
-*strings	: A series of strings the render and blit into the rect.
-startingY	: If overridden, this will be the y value the first string is centred on.
-gapY		: If overridden, this will be the gap between text elements (bottom to top)
+PARAMETERS:
+	rect		: The rect to draw the text into.
+	font		: The font to render the text with.
+	colour		: The colour to render the text in.
+	*strings	: A series of strings the render and blit into the rect.
+	startingY	: If overridden, this will be the y value the first string is centred on.
+	gapY		: If overridden, this will be the gap between text elements (bottom to top)
+RETURNS VOID
 """
 def blitInRect(rect, font, colour, *strings, startingY=-1, gapY=0):
 	elements = [font.render(str(string), True, colour) for string in strings]
@@ -476,30 +720,38 @@ def blitInRect(rect, font, colour, *strings, startingY=-1, gapY=0):
 		DISPLAY_SURFACE.blit(element, elementRect)
 		midY += gapY + elementRect.height
 
+"""
+blitColumn(rect, *rows)
+SUMMARY: creates a blit column via blitInRect
+PARAMETERS:
+	rect - rectangle to draw the text of the column into
+	*rows - series of strings to write into the rect
+RETURNS VOID
+"""
 def blitColumn(rect, *rows):
 	blitInRect(rect, MEDIUM_FONT, C_CYAN, *rows, startingY=yUnit//2, gapY=yUnit//4)
 
-''''''#
+''''''#*****************************************************************************************************
 ''''''# Networking
-''''''#
+''''''#*****************************************************************************************************
 
-UDP_IP		= "0.0.0.0"
-UDP_PORT	= 5005
+UDP_IP		= "0.0.0.0" # This IP is the UDP Anything IP, so we can receive from al lthe scoreboards without actually knowing their individual IPs
+UDP_PORT	= 5005 # Port to listen on, ensure it matches what is set on the scoreboard clients
 
 SOCK = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 SOCK.bind((UDP_IP, UDP_PORT))
 
-''''''#
+''''''#*****************************************************************************************************
 ''''''# Battle BAB Data
-''''''#
+''''''#*****************************************************************************************************
 
 TEAM_DICT = readTeamData()
 LEADERBOARD = list(TEAM_DICT.keys())
 updateLeaderboard()
 
-''''''#
+''''''#*****************************************************************************************************
 ''''''# PyGame GUI Data
-''''''#
+''''''#*****************************************************************************************************
 
 # Init
 pygame.init()
@@ -546,15 +798,16 @@ R_BSCORE_C		= (C_GRAY2,	pygame.Rect(xUnit * 10, yUnit * 2,  xUnit * 2,  yUnit * 
 R_MATCHES_R		= (C_DGRAY,	pygame.Rect(xUnit * 12, yUnit * 0,  xUnit * 4,  yUnit * 1 ))
 R_MATCHES_C		= (C_LGRAY,	pygame.Rect(xUnit * 12, yUnit * 1,  xUnit * 4,  yUnit * 8 ))
 
-''''''#
+''''''#*****************************************************************************************************
 ''''''# Run!
-''''''#
+''''''#*****************************************************************************************************
 
 # Start the game logic controller
-GameController = ServerThread()
-GameController.daemon = True
-GameController.start()
-MusicDJ = MusicSystem() # Create a DJ for music control
+GameController = ServerThread() # Create an instance of the ServerThread class
+GameController.daemon = True # Make the threaded instance a daemon thread so that it will exit when the main program exits
+GameController.start() # Start the Server thread
+
+MusicDJ = MusicSystem() # Create a "DJ" for music control
 songs = MusicDJ.loadSongs()
 MusicDJ.createQueue(songs)
 MusicDJ.playNextSongByIndex(0)
@@ -562,9 +815,6 @@ MusicDJ.playNextSongByIndex(0)
 # Start the GUI controller
 pygame.draw.rect(DISPLAY_SURFACE, *R_TITLE_C)
 blitInRect(R_TITLE_C[1], LARGE_FONT, C_MINT, "Battle", "BABs", time.strftime("%Y"))
-
-# Control Column (?)
-
 
 # Leaderboard
 pygame.draw.rect(DISPLAY_SURFACE, *R_LEADERBOARD_R)
@@ -585,6 +835,11 @@ blitInRect(R_BSCORE_R[1], SMALL_FONT, C_MINT, "Balanced", "Score")
 # Match List
 pygame.draw.rect(DISPLAY_SURFACE, *R_MATCHES_R)
 blitInRect(R_MATCHES_R[1], LARGE_FONT, C_MINT, "Match List")
+
+''''''#*****************************************************************************************************
+''''''# MAIN CLIENT LOOP
+''''''#*****************************************************************************************************
+
 
 while True:
 

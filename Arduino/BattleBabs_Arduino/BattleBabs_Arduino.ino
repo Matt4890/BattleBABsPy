@@ -90,42 +90,42 @@ void loop() {
   }
   //Check the Team 1 score buttons
   for(int i = 0; i < NUM_OF_METHODS; i++) {
-	if(digitalRead(team1Buttons[i]) == false) {
-	  delay(50); // debouncing delay
-	  if(digitalRead(team1Buttons[i]) == false) { // state verification after debounce
-		digitalWrite(statusLED,HIGH);
-		Serial.println( (methods[i] + "1") );
-		while(1) { // User input delay, wait for the button to be released before checking for new inputs
-			if(digitalRead(specialButtons[i]) == true) {
-				delay(50); //debounce delay
-	  			if(digitalRead(specialButtons[i]) == false) { // after the debouncing delay, verify the input state
-				  break; // break the while loop
+		if(digitalRead(team1Buttons[i]) == false) {
+			delay(50); // debouncing delay
+			if(digitalRead(team1Buttons[i]) == false) { // state verification after debounce
+			digitalWrite(statusLED,HIGH);
+			Serial.println( (methods[i] + "1") );
+			while(1) { // User input delay, wait for the button to be released before checking for new inputs
+				if(digitalRead(specialButtons[i]) == true) {
+					delay(50); //debounce delay
+						if(digitalRead(specialButtons[i]) == false) { // after the debouncing delay, verify the input state
+						break; // break the while loop
+					}
 				}
 			}
+			digitalWrite(statusLED,LOW);
+			}
 		}
-		digitalWrite(statusLED,LOW);
-	  }
-	}
   }
   
   //Check the team 2 score buttons
   for(int i = 0; i < NUM_OF_METHODS; i++) {
-	if(digitalRead(team2Buttons[i]) == false) {
-	  delay(50); // debouncing delay
-	  if(digitalRead(team2Buttons[i]) == false) { // state verification after debounce
-		digitalWrite(statusLED,HIGH);
-		Serial.println( (methods[i] + "2") );
-		while(1) { // User input delay, wait for the button to be released before checking for new inputs
-			if(digitalRead(specialButtons[i]) == true) {
-				delay(50); //debounce delay
-	  			if(digitalRead(specialButtons[i]) == false) { // after the debouncing delay, verify the input state
-				  break; // break the while loop
+		if(digitalRead(team2Buttons[i]) == false) {
+			delay(50); // debouncing delay
+			if(digitalRead(team2Buttons[i]) == false) { // state verification after debounce
+			digitalWrite(statusLED,HIGH);
+			Serial.println( (methods[i] + "2") );
+			while(1) { // User input delay, wait for the button to be released before checking for new inputs
+				if(digitalRead(specialButtons[i]) == true) {
+					delay(50); //debounce delay
+						if(digitalRead(specialButtons[i]) == false) { // after the debouncing delay, verify the input state
+						break; // break the while loop
+					}
 				}
 			}
+			digitalWrite(statusLED,LOW);
+			}
 		}
-		digitalWrite(statusLED,LOW);
-	  }
-	}
   }
   delay(20); // Speed limiting delay, 20ms
 }

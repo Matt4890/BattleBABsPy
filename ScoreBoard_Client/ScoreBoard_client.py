@@ -42,8 +42,7 @@ recievingCmds = ["NEXT_MATCH"]
 ''''''#*****************************************************************************************************
 
 """
-MatchFramework()
-
+Class MatchFramework
 SUMMARY: Provides the base framework for match management
 INIT PARAMETERS:
 	team1 - String of Team 1's name
@@ -174,7 +173,7 @@ class MatchFramework():
 		return self.score1, self.score2
 	
 """
-TimerSystem()
+Class TimerSystem
 SUMMARY: Provides functions for creating a timer for matches
 INIT PARAMETERS:
 	NONE
@@ -287,15 +286,15 @@ RETURNS:
 """
 def sendCmd(cmd):
 
-	# Send the command
+	# Send the command with ascii encoding to the UDP IP and PORT
 	SOCK.sendto(cmd.encode('ascii'), (UDP_IP, UDP_PORT))
 
 	# Recieve data back from the server if applicable
 	if cmd.strip().upper() in recievingCmds:
-		rawData, addr = SOCK.recvfrom(1024) # 1kiB buffer size
-		strings = rawData.decode("ascii").strip().upper()
+		rawData, addr = SOCK.recvfrom(1024) # 1kB buffer size, should be plenty as each character is 1 byte, therefore room for 1024 characters
+		strings = rawData.decode("ascii").strip().upper() # Decode the buffer
 		print("Received from server '%s'" % strings)
-		if strings.count(":") == 1:
+		if strings.count(":") == 1: # Check for the splitting character
 			teams = strings.split(":")
 			return teams
 		else:
@@ -333,13 +332,17 @@ getDataFilePath()
 SUMMARY: Gets the path to the data folder, use when accessing files like methods.txt
 PARAMETERS:
 	NONE
-RETURNS: Path to data folder
+RETURNS: Path to data folder if the folder exists
 """
 def getDataFilePath():
 	scriptDir = os.path.dirname("__file__")
-	dataFolder = "data"
-	path = os.path.join(scriptDir, dataFolder)
-	return path
+	dataFolder = "data" # name of the data folder
+	path = os.path.join(scriptDir, dataFolder) # create a path variable for the data folder, referenced alot later
+	if(os.path.exists(path) == True):
+		return path
+	else:
+		print("Datafile still didn't exist!")
+		raise FileNotFoundError("Datafile path does not exist? Check folder naming and try again.")
 
 """
 saveCurrentMatch()
@@ -350,7 +353,10 @@ RETURNS VOID
 """
 def saveCurrentMatch():
 	print("Saving current match to session file so it can be loaded on net launch")
-	fileHandle = open(getDataFilePath() + "/session.txt", "w") # we are saving current name stuff
+	if(os.path.isfile(getDataFilePath() + "/session.txt") == True):
+		fileHandle = open(getDataFilePath() + "/session.txt", "w") # we are saving current name stuff
+	else:
+		fileHandle = open(getDataFilePath() + "/session.txt", "x") # we are saving current name stuff, but the file doesnt exist so we need to cerate it ("x" tag)
 	teams = ScoreSystem.getTeamString() # get string of teams
 	teamList = teams.split(":")
 	fileHandle.write(teamList[0] + "\n")
@@ -369,17 +375,23 @@ RETURNS list teams - List of team names
 def loadCurrentMatch():
 	try:
 		print("Attempting to load previous session data")
-		fileHandle = open(getDataFilePath() + "/session.txt", "r")
-		teams = fileHandle.readlines()
-		if len(teams) != 2:
-			print("Teams file is empty! returning null")
-			teams = ["Null","Nil"]
-			return teams
+		if(os.path.isfile(getDataFilePath() + "/session.txt") == True):
+			fileHandle = open(getDataFilePath() + "/session.txt", "r")
+			teams = fileHandle.readlines()
+			if len(teams) != 2:
+				print("Teams file is empty or doesnt have enough teams in it (corrupted?)! returning File Error as teams")
+				teams = ["File","Error"]
+				return teams
+			else:
+				print("Well we haven't gotten an exception yet, so we must have loaded the file.")
+				for index in range(0,len(teams)):
+					teams[index] = teams[index].strip().upper() # Sanitization of input
+				return teams
 		else:
-			print("Well we haven't gotten an exception yet, so we must have loaded the file.")
-			for index in range(0,len(teams)):
-				teams[index] = teams[index].strip().upper() # Sanitization
+			print("File path didn't exist! Loading teams as File Missing...")
+			teams = ["File", "Missing"]
 			return teams
+
 	except Exception as e:
 		raise IndexError("Index Exception when loading session data!")
 		print("Indexing did a oopsie")
@@ -398,15 +410,19 @@ PARAMETERS:
 RETURNS dict methodDict - Dictionary of methods, indexed by method name, containing point values
 """
 def readScoreMethods():
-	fileHandle = open(getDataFilePath() + "/methods.txt", "r")
-	dataLines = fileHandle.readlines()
-	fileHandle.close()
-	methodDict = {}
-	for line in dataLines:
-		cooked = line.strip().upper()
-		scoreMethod = constructScoreMethod(cooked)
-		methodDict[scoreMethod[0]] = scoreMethod[1] # methodDict[method] = score
-	return methodDict
+	if(os.path.isfile(getDataFilePath() + "/methods.txt") == True):
+		fileHandle = open(getDataFilePath() + "/methods.txt", "r")
+		dataLines = fileHandle.readlines()
+		fileHandle.close()
+		methodDict = {}
+		for line in dataLines:
+			cooked = line.strip().upper()
+			scoreMethod = constructScoreMethod(cooked)
+			methodDict[scoreMethod[0]] = scoreMethod[1] # methodDict[method] = score
+		return methodDict
+	else:
+		raise FileNotFoundError("Methods text file does not exist!!!")
+		print("Methods file path does not exist!")
 
 """
 readMethodNames()
@@ -416,17 +432,21 @@ PARAMETERS:
 RETURNS: list methods - list of method names
 """
 def readMethodNames():
-	fileHandle = open(getDataFilePath() + "/methods.txt", "r")
-	dataLines = fileHandle.readlines()
-	fileHandle.close()
-	index = 0
-	methods = []
-	for line in dataLines:
-		cooked = line.strip().upper()
-		cookedPan = cooked.split(":")
-		methods.insert(index, cookedPan[0])
-		index += 1
-	return methods
+	if(os.path.isfile(getDataFilePath() + "/methods.txt") == True):
+		fileHandle = open(getDataFilePath() + "/methods.txt", "r")
+		dataLines = fileHandle.readlines()
+		fileHandle.close()
+		index = 0
+		methods = []
+		for line in dataLines:
+			cooked = line.strip().upper()
+			cookedPan = cooked.split(":")
+			methods.insert(index, cookedPan[0])
+			index += 1
+		return methods
+	else:
+		raise FileNotFoundError("Methods text file does not exist!!!")
+		print("Methods file path does not exist!")
 
 """
 constructScoreMethod(string)
@@ -530,19 +550,11 @@ RETURN VOID
 def updateMethod(index, methodIn):
 	method[index] = methodIn
 
-
-
-
-
-
-
-
-
 ''''''#*****************************************************************************************************
-''''''# Client Loop and main code begins here
+''''''# ---[ MAIN CODE BEGINS HERE ]---
 ''''''#*****************************************************************************************************
 
-
+## Begin Serial Port connection code
 
 print("Listing COM ports:")
 for port in serial.tools.list_ports.comports():
@@ -558,16 +570,20 @@ if len(arduinoPorts) > 1:
 
 print("Connecting to Arduino...")
 ser = serial.Serial(arduinoPorts[0]) #establish connection to COM port
-serialThread = threading.Thread(target=readSerialConnection, args=(ser,)) #make a thread to handle receiving without breaking
-serialThread.daemon = True # make it exit on close
-serialThread.start() # start the read thread
+
+serialThread = threading.Thread(target=readSerialConnection, args=(ser,)) # Create a thread for handling serial data events
+serialThread.daemon = True # Setup the thread as a daemon so that it will exit when the main program closes
+serialThread.start() # Start the serial data thread
+
+## End Serial Port connection code
+
+
+## ---[ PyGame Initialization ]---
 
 pygame.init() #Initialize PyGame So we can make a GUI
 
-#Music and Sound Effects
+## Load Sound Effects
 buzzerSound = pygame.mixer.Sound(getDataFilePath() + "/buzzer.wav") # load buzzer sound
-# pygame.mixer.music.load(getDataFilePath() + "/music.wav") # load background music
-# pygame.mixer.music.stop() # make sure it doesnt start playing
 
 # Window Parameters
 WINDOW_WIDTH	= 1920
@@ -608,17 +624,23 @@ R_METHOD2_R     = (C_LGRAY, pygame.Rect(xUnit * 11,	yUnit * 5, 	xUnit * 4,	yUnit
 # Scorekeeping and Countdown System
 __MatchLength = 120 # Change this variable's value to adjust the length of a match in seconds. Must be an integer!
 
-Time = TimerSystem() #Main Timer System
-ScoreSystem = MatchFramework("", "", __MatchLength) # Create Scoring System from a MatchFramework
+Time = TimerSystem() # Create an instance of the TimerSystem class
+ScoreSystem = MatchFramework("", "", __MatchLength) # Create an instance of the MatchFramework class
+
 teams = ["Null", "Null"] #Teams List: Holder of the Team Names
 scores = ["0", "0"] #Scores List: Holder of the Scores
 method = ["Null", "Null"] #Method List: Holder of the Latest Scoring method
-startTime = time.time()
 
-Time.setMatchTime(ScoreSystem.getMatchLength()) #match time set
+startTime = time.time() # Get initial time
 
-teams = loadCurrentMatch()
+Time.setMatchTime(ScoreSystem.getMatchLength()) # Set the inital match time
+
+teams = loadCurrentMatch() # Load a saved session
 ScoreSystem.insertTeamNames(teams[0], teams[1])
+
+''''''#*****************************************************************************************************
+''''''# ---[ MAIN LOOP ]---
+''''''#*****************************************************************************************************
 
 while True: #Main Loop
 	teams = ScoreSystem.getTeams()
@@ -672,7 +694,7 @@ while True: #Main Loop
 			print("Quitting.")
 			pygame.quit() #quit if so
 			quit()
-		elif event.type == pygame.KEYDOWN: #Debug/override of events
+		elif event.type == pygame.KEYDOWN: # KEYDOWN Events, mainly for debugging reasons
 			if event.key == pygame.K_n:
 				if(Time.getState() == False):
 					teams = sendCmd("next_match")
@@ -681,27 +703,28 @@ while True: #Main Loop
 				else:
 					print("Match running, cant get new teams")
 
-			elif event.key == pygame.K_r:
-				sendCmd("reset") # resets all data on server side, cant be undone
-
-			elif event.key == pygame.K_s:
-				sendCmd("reset_scores") # resets score data on server side, cant be undone
-
-			elif event.key == pygame.K_m:
-				sendCmd("reset_matches") # reset match list on server side
-
 			elif event.key == pygame.K_f: # Force send match over data
 				sendCmd(teams[0] + ":" + str(scores[0]) + "," + teams[1] + ":" + str(scores[1]))
 
 			elif event.key == pygame.K_PERIOD: # Debug add 1 point to team 2
 				if matchState == True:
 					ScoreSystem.changeTeam2Score(1)
-					updateMethod(1,"ADMIN") # reset latest scoring method for team 1
+					updateMethod(1,"ADMIN+") # reset latest scoring method for team 1
+
+			elif event.key == pygame.K_PERIOD: # Debug sub 1 point to team 2
+				if matchState == True:
+					ScoreSystem.changeTeam2Score(-1)
+					updateMethod(1,"ADMIN-") # reset latest scoring method for team 1
 
 			elif event.key == pygame.K_COMMA: # Debug add 1 point to team 1
 				if matchState == True:
 					ScoreSystem.changeTeam1Score(1)
-					updateMethod(0,"ADMIN") # reset latest scoring method for team 1
+					updateMethod(0,"ADMIN+") # reset latest scoring method for team 1
+			
+			elif event.key == pygame.K_x: # Debug sub 1 point to team 1
+				if matchState == True:
+					ScoreSystem.changeTeam1Score(-1)
+					updateMethod(0,"ADMIN-") # reset latest scoring method for team 1
 
 			elif event.key == pygame.K_SPACE: # Debug start match
 				Time.setState(True)
