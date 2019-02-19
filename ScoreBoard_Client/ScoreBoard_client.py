@@ -1,15 +1,16 @@
 """
-This is a terminal-based client for BattleBABs.
-It runs in a terminal, sending commands to the server that are input via stdin.
-Commands may be strung together in one line using the pipe '|' character.
+GUI Client Program  with console backend for BattleBabs at Robert Thirsk High School.
+Communicates with an arduino controller for score and match control (SERIAL) and a leaderboard server for
+leaderboard statistics (UDP)
+
 
 Author: Matthew Allwright
-Modified By: Not Matthew Allwright :P
+Modified By: Joshua Rasmussen
 """
 
-''''''#
-''''''# Imports
-''''''#
+''''''#*****************************************************************************************************
+''''''# ---[ Imports ]---
+''''''#*****************************************************************************************************
 
 import os
 import socket
@@ -21,11 +22,11 @@ import time
 import warnings
 import threading
 
-''''''#
-''''''# Networking
-''''''#
+''''''#*****************************************************************************************************
+''''''# ---[ Networking ]---
+''''''#*****************************************************************************************************
 
-UDP_IP = "255.255.255.255" #IP is UDP Broadcast
+UDP_IP = "255.255.255.255" #IP is UDP Broadcast IP
 UDP_PORT = 5005 # use a port we *think* nothing is using...hopefully
 
 SOCK = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # create a socket configured for UDP Datagram communication
@@ -33,10 +34,22 @@ SOCK.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1) # setup the socket to 
 
 # List of commands that should expect a message back from the server
 recievingCmds = ["NEXT_MATCH"]
-''''''#
-''''''# Classes
-''''''#
 
+
+
+''''''#*****************************************************************************************************
+''''''# ---[ CLASSES ]---
+''''''#*****************************************************************************************************
+
+"""
+MatchFramework()
+
+SUMMARY: Provides the base framework for match management
+INIT PARAMETERS:
+	team1 - String of Team 1's name
+	team2 - String of Team 2's name
+	startTime - initial match length
+"""
 class MatchFramework():
 	def __init__(self, team1 = "Team 1", team2 = "Team 2", startTime = 20):
 		self.team1 = team1.upper() # Uppercase in case we get lowercases
@@ -53,43 +66,119 @@ class MatchFramework():
 			self.score2, 
 			self.timeL
 		)
-	
+
+	"""
+	insertTeamNames(self, team1Name, team2Name)
+	SUMMARY: Sets the names of the current teams
+	PARAMETERS:
+		team1Name - String of team 1's Name
+		team2Name - String of team 2's Name
+	RETURNS VOID
+	"""
 	def insertTeamNames(self, team1Name, team2Name):
 		self.team1 = team1Name
 		self.team2 = team2Name
 		print("Set team 1 name to [%s] and team 2 name to [%s]" % (self.team1, self.team2))
 
+	"""
+	getTeams(self)
+	SUMMARY: Gets current team names in the match
+	PARAMETERS:
+		NONE
+	RETURNS list teams - list of length 2 with values [team1Name, team2Name]
+	"""
 	def getTeams(self):
-		teams = [self.team1, self.team2]
+		teams = [self.team1, self.team2] ##Create return list
 		return teams
 
+	"""
+	getTeamString(self)
+	SUMMARY: Gets the current teams in the match as a string
+	PARAMETERS:
+		NONE
+	RETURNS string str - String of team names in format "{Team1Name}:{Team2Name}"
+	"""
 	def getTeamString(self):
 		return str(self.team1 + ":" + self.team2)
 	
+	"""
+	changeTeam1Score(self, delta)
+	SUMMARY: Modifies team 1's current score
+	PARAMETERS:
+		delta - Integer to modify team 1's score by, can be positive or negative
+	RETURNS VOID
+	"""
 	def changeTeam1Score(self, delta):
-		self.score1 += delta
+		self.score1 += int(delta) #int cast for potential user error
 		print("Team 1's score had delta %i, score is now %i" % (delta, self.score1))
 	
+	"""
+	changeTeam2Score(self, delta)
+	SUMMARY: Modifies team 2's current score
+	PARAMETERS:
+		delta - Integer to modify team 2's score by, can be positive or negative
+	RETURNS VOID
+	"""
 	def changeTeam2Score(self, delta):
-		self.score2 += delta
+		self.score2 += int(delta) #int cast for potential user error
 		print("Team 2's score had delta %i, score is now %i" % (delta, self.score2))
 	
+	"""
+	getTeam1Score(self)
+	SUMMARY: gets Team 1's current score
+	PARAMETERS:
+		NONE
+	RETURNS int score - Integer of team 1's current score
+	"""
 	def getTeam1Score(self):
 		return self.score1
 	
+	"""
+	getTeam2Score(self)
+	SUMMARY: gets Team 2's current score
+	PARAMETERS:
+		NONE
+	RETURNS int score - Integer of team 2's current score
+	"""
 	def getTeam2Score(self):
 		return self.score2
 	
+	"""
+	setMatchLength(self, length)
+	SUMMARY: Sets the match length to the specified length in seconds
+	PARAMETERS:
+		int length - Integer of match length in seconds
+	RETURNS VOID
+	"""
 	def setMatchLength(self, length):
-		self.timeL = length
+		self.timeL = int(length)
 	
+	"""
+	getMatchLength(self)
+	SUMMARY: Gets the current match length
+	PARAMETERS:
+		NONE
+	RETURNS int time - integer of match length
+	"""
 	def getMatchLength(self):
 		return self.timeL
 	
+	"""
+	getScores(self)
+	SUMMARY: Gets the current scores
+	PARAMETERS:
+		NONE
+	RETURNS tuple scores - tuple of the scores in form [team1Score, team2Score]
+	"""
 	def getScores(self):
 		return self.score1, self.score2
 	
-
+"""
+TimerSystem()
+SUMMARY: Provides functions for creating a timer for matches
+INIT PARAMETERS:
+	NONE
+"""
 class TimerSystem():
 	def __init__(self):
 		self.start = False
@@ -97,43 +186,104 @@ class TimerSystem():
 		self.timeRem = 0
 		self.matchLength = 20
 	
+	"""
+	setMatchTime(self, setTime)
+	SUMMARY: sets the match length to specified time in seconds
+	PARAMETERS:
+		int setTime - integer of desired match length in seconds
+	RETURNS VOID
+	"""
 	def setMatchTime(self, setTime):
-		self.matchLength = setTime
+		self.matchLength = int(setTime)
 	
+	"""
+	setTimeRemain(self, timeRemain)
+	SUMMARY: Sets the remaining time in seconds for the match
+	PARAMETERS:
+		int timeRemain - integer of remaining time in seconds
+	RETURNS VOID
+	"""
 	def setTimeRemain(self, timeRemain):
-		self.timeRem = timeRemain
+		self.timeRem = int(timeRemain)
 
+	"""
+	decrementTime(self)
+	SUMMARY: decrements remaining time by 1 second
+	PARAMETERS:
+		NONE
+	RETURNS VOID
+	"""
 	def decrementTime(self):
 		self.timeRem -= 1
 	
+	"""
+	getRemainingTime(self)
+	SUMMARY: Gets the current remaining time in the match
+	PARAMETERS:
+		NONE
+	RETURNS int timeRem - integer of remaining time of match in seconds
+	"""
 	def getRemainingTime(self):
 		return self.timeRem
 	
+	"""
+	setState(self, state)
+	SUMMARY: sets the state of the timer. True will start the timer and False stops it.
+	PARAMETERS:
+		bool state - Boolean of state to set timer in
+	RETURNS VOID
+	"""
 	def setState(self, state):
-		self.start = state
+		self.start = bool(state)
 		print("State is " + str(self.start))
 		if self.start == True:
 			self.timeRem = self.matchLength
 		else:
 			buzzerSound.play()
 	
+	"""
+	getState(self)
+	SUMMARY: gets the state of the timer
+	PARAMETERS:
+		NONE
+	RETURNS: bool state - State of the timer. True = activated False = deactivated
+	"""
 	def getState(self):
 		return self.start
 	
+	"""
+	getPulser(self)
+	SUMMARY: gets the state of the pulser variable
+	PARAMETERS:
+		NONE
+	RETURNS bool pulser - Boolean value of the pulser
+	"""
 	def getPulser(self):
 		return self.pulser
 	
+	"""
+	setPulser(self, state)
+	SUMMARY: sets the pulser variable to the specified boolean state
+	PARAMETERS:
+		bool state - Boolean state to set pulser variable to
+	RETURNS VOID
+	"""
 	def setPulser(self, state):
-		self.pulser = state
+		self.pulser = bool(state)
 
-''''''#
-''''''# Functions
-''''''#
+''''''#*****************************************************************************************************
+''''''# ---[ Functions ]---
+''''''#*****************************************************************************************************
 
 """
-Sends a command to the global socket.
-
-cmd:	A string command.
+sendCmd(cmd)
+SUMMARY: Sends a command to the server program (leaderboard)
+PARAMETERS:
+	cmd - string of command to send
+RETURNS:
+	Return value is command dependent!
+		COMMAND = "NEXT_MATCH" 	-> RETURNS string teams - String of next match in format "Team1:Team2"
+		COMMAND = OTHERS 		-> RETURNS VOID
 """
 def sendCmd(cmd):
 
@@ -154,16 +304,19 @@ def sendCmd(cmd):
 			return teams
 
 """
-Renders and blits a series of strings in the centre of a rect.
-If multiple strings are given, they are blitted in a column of descending order.
-The whole column of blitted text is still centred perfect in the rect.
+blitInRect(rect, font, colour, *strings, startingY=-1, gapY=0)
+SUMMARY: Renders and blits a series of strings in the centre of a rect.
+	If multiple strings are given, they are blitted in a column of descending order.
+	The whole column of blitted text is still centred perfect in the rect.
 
-rect		: The rect to draw the text into.
-font		: The font to render the text with.
-colour		: The colour to render the text in.
-*strings	: A series of strings the render and blit into the rect.
-startingY	: If overridden, this will be the y value the first string is centred on.
-gapY		: If overridden, this will be the gap between text elements (bottom to top)
+PARAMETERS:
+	rect		: The rect to draw the text into.
+	font		: The font to render the text with.
+	colour		: The colour to render the text in.
+	*strings	: A series of strings the render and blit into the rect.
+	startingY	: If overridden, this will be the y value the first string is centred on.
+	gapY		: If overridden, this will be the gap between text elements (bottom to top)
+RETURNS VOID
 """
 def blitInRect(rect, font, colour, *strings, startingY=-1, gapY=0):
 	elements = [font.render(str(string), True, colour) for string in strings]
@@ -176,9 +329,11 @@ def blitInRect(rect, font, colour, *strings, startingY=-1, gapY=0):
 		midY += gapY + elementRect.height
 
 """
-Gets the path to the data folder, use when accessing files like methods.txt
-
-Returns: file path to data folder
+getDataFilePath()
+SUMMARY: Gets the path to the data folder, use when accessing files like methods.txt
+PARAMETERS:
+	NONE
+RETURNS: Path to data folder
 """
 def getDataFilePath():
 	scriptDir = os.path.dirname("__file__")
@@ -186,6 +341,13 @@ def getDataFilePath():
 	path = os.path.join(scriptDir, dataFolder)
 	return path
 
+"""
+saveCurrentMatch()
+SUMMARY: saves the current match data to a session file for persistence
+PARAMETERS:
+	NONE
+RETURNS VOID
+"""
 def saveCurrentMatch():
 	print("Saving current match to session file so it can be loaded on net launch")
 	fileHandle = open(getDataFilePath() + "/session.txt", "w") # we are saving current name stuff
@@ -197,6 +359,13 @@ def saveCurrentMatch():
 	fileHandle.flush()
 	fileHandle.close()
 
+"""
+loadCurrentMatch()
+SUMMARY: Loads saved match data from a session file
+PARAMETERS:
+	NONE
+RETURNS list teams - List of team names
+"""
 def loadCurrentMatch():
 	try:
 		print("Attempting to load previous session data")
@@ -207,14 +376,14 @@ def loadCurrentMatch():
 			teams = ["Null","Nil"]
 			return teams
 		else:
-			print("well we haven't gotten an exception yet, so we must have loaded the file.")
+			print("Well we haven't gotten an exception yet, so we must have loaded the file.")
 			for index in range(0,len(teams)):
-				teams[index] = teams[index].strip().upper()
+				teams[index] = teams[index].strip().upper() # Sanitization
 			return teams
 	except Exception as e:
 		raise IndexError("Index Exception when loading session data!")
 		print("Indexing did a oopsie")
-		raise FileNotFoundError("File not found Error when loading session data!")
+		raise FileNotFoundError("File not found Error when loading session data! Blame Mechanical team.")
 		print("No file found? Someone deleted or moved it, blame mechanical")
 		raise e
 		print("Error occured...")
@@ -222,9 +391,11 @@ def loadCurrentMatch():
 		return teams
 
 """
-Reads the methods text folder to create a dictionary of methods and their respective score value
-
-Returns a dictionary of methods in form Dictionary[Method Name] = Score integer
+readScoreMethods()
+SUMMARY: Reads the methods text file to generate a dictionary of scoring methods and their point value
+PARAMETERS:
+	NONE
+RETURNS dict methodDict - Dictionary of methods, indexed by method name, containing point values
 """
 def readScoreMethods():
 	fileHandle = open(getDataFilePath() + "/methods.txt", "r")
@@ -238,9 +409,11 @@ def readScoreMethods():
 	return methodDict
 
 """
-Reads the methods text file, but instead of creating a dictionary this returns a list of method names only
-
-Returns a list of the method names
+readMethodNames()
+SUMMARY: Reads the methods text file to create a list of method names
+PARAMETERS:
+	NONE
+RETURNS: list methods - list of method names
 """
 def readMethodNames():
 	fileHandle = open(getDataFilePath() + "/methods.txt", "r")
@@ -256,9 +429,11 @@ def readMethodNames():
 	return methods
 
 """
-Constructs a scoring method by splitting a method string and parsing the integer section
-
-Returns a list containing the method name and the integer score value
+constructScoreMethod(string)
+SUMMARY: Constructs a scoring method by splitting the method string and integer apart
+PARAMETERS:
+	string string - String of a scoring method and its point value in format "Name:score"
+RETURNS list cooked - list of scoring method of type ["method",int score]
 """
 def constructScoreMethod(string): #AKA split the string, parse integer
 	raw = string.split(":")
@@ -275,10 +450,11 @@ def constructScoreMethod(string): #AKA split the string, parse integer
 	return cooked
 
 """
-Handles serial events from the arduino
-
-Takes parameter data, a string with a potential command.
-Returns nothing
+handleSerialRead(data)
+SUMMARY: Handles data from a serial event
+PARAMETERS:
+	string data - string of data from Serial event that may have a command in it
+RETURNS VOID
 """
 def handleSerialRead(data):
 	strippedData = data.strip().upper()
@@ -331,9 +507,11 @@ def handleSerialRead(data):
 	print("[COM] Handle complete.")	
 
 """
-This function is threaded to always receive data from the comm port
-
-Returns nothing
+readSerialConnection(ser)
+SUMMARY: Threaded function for constant reading of the serial port
+PARAMETERS:
+	Serial ser - Serial port to read
+RETURNS VOID
 """
 def readSerialConnection(ser):
 	while True:
@@ -342,12 +520,12 @@ def readSerialConnection(ser):
 		handleSerialRead(reading)
 		
 """
-Updates the latest score method for each team
-
-Takes parameters:
-	index - integer of 0 or 1 to edit method for, team 1 and 2 respectively
-	methodIn - string of the method name that happened
-Returns nothing
+updateMethod(index, methodIn)
+SUMMARY: updates the recent scoring method for each team on the GUI
+PARAMETERS:
+	int index - integer of method to modify
+	string methodIn - string of method to write
+RETURN VOID
 """
 def updateMethod(index, methodIn):
 	method[index] = methodIn
@@ -360,9 +538,9 @@ def updateMethod(index, methodIn):
 
 
 
-''''''# *****************************************************
+''''''#*****************************************************************************************************
 ''''''# Client Loop and main code begins here
-''''''# *****************************************************
+''''''#*****************************************************************************************************
 
 
 

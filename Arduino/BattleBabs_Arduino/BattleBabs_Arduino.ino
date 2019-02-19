@@ -34,7 +34,7 @@ const int specialButtons[NUM_OF_SPEC] = {11,12}; // buttons for special buttons 
 const String specialEvents[NUM_OF_SPEC] = {"n","s"}; // events to send for the special buttons, n is request next match, s is start match
 
 
-//pin 13 is status LED
+//pin 13 is the status LED
 #define statusLED 13
 
 
