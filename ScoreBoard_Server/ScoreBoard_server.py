@@ -109,7 +109,6 @@ class ServerThread(Thread):
 			# Otherwise... We can't comply to instructions we can't understand ¯\_(ツ)_/¯
 			print("Message not recognized. Ignoring.\n\n")
 
-
 ''''''#*****************************************************************************************************
 ''''''# Generic Classes
 ''''''#*****************************************************************************************************
